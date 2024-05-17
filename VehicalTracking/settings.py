@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'drf_yasg',
      'django_filters',
      'corsheaders',
+      'django_cron',
 ]
 
 MIDDLEWARE = [
