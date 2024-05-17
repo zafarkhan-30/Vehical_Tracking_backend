@@ -1,7 +1,7 @@
 import requests
 
 def run_device_details_view():
-    url = "https://timscan.transvolt.in/vehical/post-Device-Details/"  
+    url = "http://timscan.transvolt.in/vehical/post-Device-Details/"  
     headers = {"Content-Type": "application/json"} 
     response = requests.get(url, headers=headers)
     
