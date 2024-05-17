@@ -32,7 +32,6 @@ def create_device_location(device_id, location_data , transactionId):
     device_instance = devices.objects.get(device_id=device_id)
 
     location_details = location_data.get("location", {})
-
     lat = float(location_details.get("latitude"))
     long = float(location_details.get("longitude"))
     location = Point(long, lat, srid=4326)
