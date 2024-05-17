@@ -104,10 +104,10 @@ WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'Vehical_Tracking',
+        'NAME': 'VehicalTracking',
         'USER': 'postgres',
-        'PASSWORD': 'admin@123',
-        'HOST': 'localhost',
+        'PASSWORD': 'PmAyaIhGmVVUtW22TNgh',
+        'HOST': 'vehicaltracking.c3isgu44krjo.ap-south-1.rds.amazonaws.com',
         'PORT': '5432',
         # 'OPTIONS': {
         #     'driver': 'ODBC Driver 17 for SQL Server',

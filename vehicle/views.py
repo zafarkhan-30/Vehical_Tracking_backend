@@ -126,7 +126,6 @@ class ViewDeviceDetails(generics.GenericAPIView):
                     device_location = deviceLocation.objects.filter(device=device).latest("created_at")
                     
                     device_location_serializer = DeviceLocationSerializer(device_location).data
-                    print(device_location_serializer)
                 except deviceLocation.DoesNotExist:
                     device_location_serializer ={}
 
