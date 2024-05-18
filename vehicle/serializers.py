@@ -15,13 +15,49 @@ class DeviceStatusSerializer(serializers.ModelSerializer):
 
 
 class DeviceLocationSerializer(GeoFeatureModelSerializer):
-    class Meta:
+    device_name = serializers.SerializerMethodField()
+    registrationNumber = serializers.SerializerMethodField()
+    trackingCode = serializers.SerializerMethodField()
+    stateOfCharge = serializers.SerializerMethodField()
+    class Meta:     
         model = deviceLocation
         # fields = "__all__"
         # exclude = ["transactionId" , "id" , ]
         fields = ["gpsTime" , "gprsTime" , "latitude" , "longitude" , "altitude" , "heading" ,  "speedKph" ,"address",
-                   "odometer" , "gpsSignal" , "created_at"]
+                   "odometer" , "gpsSignal" , "created_at" , "device_name" ,"registrationNumber" ,
+                   "trackingCode" , "stateOfCharge"]
         geo_field='location'
+
+    def get_device_name(self , value):
+        try:
+            data = value.device.name
+        except:
+            data = None
+        return data
+    
+    def get_registrationNumber(self, value):
+        try:
+            data = value.device.registrationNumber
+        except:
+            data = None
+        return data
+    
+    def get_trackingCode(self, value):
+        try:
+            data = value.device.trackingCode
+        except:
+            data = None
+        return data
+    
+    def get_stateOfCharge(self, value):
+        try:
+            can_info_queryset = value.device.canInfo_devices.all()
+            state_of_charge_values = can_info_queryset.latest("created_at").stateOfCharge
+        except:
+            state_of_charge_values = None
+      
+        return state_of_charge_values
+       
         
 class CanInfoSerializer(serializers.ModelSerializer):
     class Meta:
