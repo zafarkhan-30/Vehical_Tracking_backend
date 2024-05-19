@@ -12,6 +12,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import environ
+
+
+env = environ.Env()
+# reading .env file
+environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,10 +32,10 @@ if os.name == 'nt':
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0(!s^e+q2$2!wx4hcx-nid#&hmy=vz#zkom3u9)&r3n%pni9s3'
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -105,14 +111,11 @@ WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'VehicalTracking',
-        'USER': 'postgres',
-        'PASSWORD': 'PmAyaIhGmVVUtW22TNgh',
-        'HOST': 'vehicaltracking.c3isgu44krjo.ap-south-1.rds.amazonaws.com',
-        'PORT': '5432',
-        # 'OPTIONS': {
-        #     'driver': 'ODBC Driver 17 for SQL Server',
-        # },
+        'NAME': env("LOCAL_DATABASE_NAME"),
+        'USER': env("LOCAL_DATABASE_USER"),
+        'PASSWORD': env("LOCAL_DATABASE_PASSWORD"),
+        'HOST': env("LOCAL_DATABASE_HOST"),
+        'PORT': env("LOCAL_DATABASE_PORT"),
     },
 }
 
