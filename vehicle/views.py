@@ -143,7 +143,7 @@ class ViewDeviceDetails(generics.GenericAPIView):
                     canInfo_serializer = {}
 
                 try:
-                    alerts_detail = alerts.objects.filter(device_id = device).latest("-created_at")
+                    alerts_detail = alerts.objects.filter(device_id = device).latest("created_at")
                     alerts_serializer = AlertsSerializer(alerts_detail).data
                 except alerts.DoesNotExist:
                     alerts_serializer = {}
