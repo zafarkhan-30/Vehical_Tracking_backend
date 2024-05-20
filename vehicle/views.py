@@ -15,6 +15,8 @@ from rest_framework.views import APIView
 # Create your views here.
 import datetime
 from VehicalTracking import settings
+from datetime import datetime, date
+from django.utils import timezone
 
 
 class DeviceDetailsView(APIView):
@@ -95,10 +97,10 @@ class ViewDeviceDetails(generics.GenericAPIView):
     def get_queryset(self):
         
         name = self.request.query_params.get('name')
-        if name:
-           queryset = devices.objects.filter(name__icontains = name)
-        else:
-            queryset = devices.objects.all()
+        names = ["MBMT-32", "MBMT-25"]
+        queryset = devices.objects.none()  # Initialize an empty queryset
+        for i in names:
+            queryset |= devices.objects.filter(name__icontains=i)
         return queryset
     
 
@@ -118,63 +120,66 @@ class ViewDeviceDetails(generics.GenericAPIView):
         data_list = []
         # all_devices = devices.objects.all()
         all_devices = self.get_queryset()
+        # print(all_devices)
         if all_devices:
+          
             for device in all_devices:
-                device_details_serailizer = deviceDetailsSerialiser(device).data
-            
+                # device_details_serailizer = deviceDetailsSerialiser(device).data
+                today = date.today()
+                
                 try:
-                    device_location = deviceLocation.objects.filter(device=device).latest("created_at")
-                    
+                    # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
+                    device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
                     device_location_serializer = DeviceLocationSerializer(device_location).data
                 except deviceLocation.DoesNotExist:
                     device_location_serializer ={}
 
-                try:
-                    device_status = deviceStatus.objects.filter(device_id=device).latest("created_at")
-                    device_status_serializer = DeviceStatusSerializer(device_status).data
-                except deviceStatus.DoesNotExist:
-                    device_status_serializer = {}
+                # try:
+                #     device_status = deviceStatus.objects.filter(device_id=device).latest("created_at")
+                #     device_status_serializer = DeviceStatusSerializer(device_status).data
+                # except deviceStatus.DoesNotExist:
+                #     device_status_serializer = {}
 
 
-                try:
-                    canInfo_detail = canInfo.objects.filter(device_id = device).latest("created_at")
-                    canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                except canInfo.DoesNotExist:
-                    canInfo_serializer = {}
+                # try:
+                #     canInfo_detail = canInfo.objects.filter(device_id = device).latest("created_at")
+                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
+                # except canInfo.DoesNotExist:
+                #     canInfo_serializer = {}
 
-                try:
-                    alerts_detail = alerts.objects.filter(device_id = device).latest("created_at")
-                    alerts_serializer = AlertsSerializer(alerts_detail).data
-                except alerts.DoesNotExist:
-                    alerts_serializer = {}
+                # try:
+                #     alerts_detail = alerts.objects.filter(device_id = device).latest("created_at")
+                #     alerts_serializer = AlertsSerializer(alerts_detail).data
+                # except alerts.DoesNotExist:
+                #     alerts_serializer = {}
                 
-                try:
-                    todaysDrive_detail = todaysDrive.objects.filter(device_id = device).latest("created_at")
-                    todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
-                except todaysDrive.DoesNotExist:
-                    todaysDrive_serializer = {}
+                # try:
+                #     todaysDrive_detail = todaysDrive.objects.filter(device_id = device).latest("created_at")
+                #     todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
+                # except todaysDrive.DoesNotExist:
+                #     todaysDrive_serializer = {}
                 
-                try:
-                    links_detail = links.objects.filter(device_id = device).latest("created_at")
-                    links_serializer = LinksSerializer(links_detail).data
+                # try:
+                #     links_detail = links.objects.filter(device_id = device).latest("created_at")
+                #     links_serializer = LinksSerializer(links_detail).data
 
-                except links.DoesNotExist:
-                    links_serializer = {}
-                try:
-                    dinputs_detail = dinputs.objects.filter(device_id = device).latest("transactionId")
-                    dinputs_serializer = DinputsSerializer(dinputs_detail).data
-                except dinputs.DoesNotExist:
-                    dinputs_serializer = {}
+                # except links.DoesNotExist:
+                #     links_serializer = {}
+                # try:
+                #     dinputs_detail = dinputs.objects.filter(device_id = device).latest("transactionId")
+                #     dinputs_serializer = DinputsSerializer(dinputs_detail).data
+                # except dinputs.DoesNotExist:
+                #     dinputs_serializer = {}
 
                 data_list.append({
-                    'device_details' : device_details_serailizer,
-                    'device_status': device_status_serializer,
+                    # 'device_details' : device_details_serailizer,
+                    # 'device_status': device_status_serializer,
                     'device_location': device_location_serializer,
-                    'canInfo' : canInfo_serializer,
-                    "alerts" : alerts_serializer , 
-                    "todaysDrive" : todaysDrive_serializer,
-                    "links" : links_serializer,
-                    "dinputs" : dinputs_serializer
+                    # 'canInfo' : canInfo_serializer,
+                    # "alerts" : alerts_serializer , 
+                    # "todaysDrive" : todaysDrive_serializer,
+                    # "links" : links_serializer,
+                    # "dinputs" : dinputs_serializer
 
                 })
         else: 
