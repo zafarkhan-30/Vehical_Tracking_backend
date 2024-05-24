@@ -17,6 +17,9 @@ import datetime
 from VehicalTracking import settings
 from datetime import datetime, date
 from django.utils import timezone
+from rest_framework.throttling import AnonRateThrottle
+
+
 
 
 class DeviceDetailsView(APIView):
@@ -191,6 +194,8 @@ class ViewDeviceDetails(APIView):
 
                
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
+
+    throttle_classes = [AnonRateThrottle]
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
