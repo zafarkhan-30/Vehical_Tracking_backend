@@ -190,7 +190,7 @@ class ViewDeviceDetails(APIView):
         return Response(data_list)
 
                
-class ViewAllDeviceDetails(generics.GenericAPIView):
+class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -204,14 +204,13 @@ class ViewAllDeviceDetails(generics.GenericAPIView):
     """
     def get_queryset(self):
         
-        # name = self.request.query_params.get('name')
-        # names = ["MBMT-32", "MBMT-25"]
-        # queryset = devices.objects.none()  # Initialize an empty queryset
-        # # for i in names:
-        # if name:
-        #     queryset |= devices.objects.filter(name__icontains='MBMT')
-        # else:
-        queryset = devices.objects.all()
+        name = self.request.query_params.get('name')
+        queryset = devices.objects.none()  # Initialize an empty queryset
+        # for i in names:
+        if name:
+            queryset |= devices.objects.filter(name__icontains='MBMT')
+        else:
+            queryset |= devices.objects.filter(name__icontains='MBMT')
             
         return queryset
     
@@ -241,21 +240,22 @@ class ViewAllDeviceDetails(generics.GenericAPIView):
                 
                 try:
                     device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
-                    device_location_serializer = DeviceLocationSerializer(device_location).data
+                    device_location_serializer = MBMTDeviceLocationSerializer(device_location).data
                 except deviceLocation.DoesNotExist:
                     device_location_serializer ={}
 
-                try:
-                    canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                except canInfo.DoesNotExist:
-                    canInfo_serializer = {}
+                # try:
+                #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
+                # except canInfo.DoesNotExist:
+                #     canInfo_serializer = {}
 
             
                 data_list.append({
                     'device_details' : device_details_serailizer,
                     'device_location': device_location_serializer,
-                    'canInfo' : canInfo_serializer })
+                    
+                    })
         else: 
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
          

@@ -90,3 +90,28 @@ class DinputsSerializer(serializers.ModelSerializer):
     class Meta:
         model = dinputs
         exclude = ["id" , "device" , "transactionId"]
+
+
+
+
+class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
+    # device_name = serializers.SerializerMethodField()
+    # registrationNumber = serializers.SerializerMethodField()
+    # trackingCode = serializers.SerializerMethodField()
+    stateOfCharge = serializers.SerializerMethodField()
+    class Meta:     
+        model = deviceLocation
+        # fields = "__all__"
+        # exclude = ["transactionId" , "id" , ]
+        fields = ["gpsTime" , "gprsTime" , "latitude" , "longitude" , "altitude" , "heading" ,  "speedKph" ,"address",
+                   "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
+        geo_field='location'
+
+    def get_stateOfCharge(self, value):
+        try:
+            can_info_queryset = value.device.canInfo_devices.all()
+            state_of_charge_values = can_info_queryset.latest("created_at").stateOfCharge
+        except:
+            state_of_charge_values = None
+      
+        return state_of_charge_values
