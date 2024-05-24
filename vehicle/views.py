@@ -101,9 +101,9 @@ class ViewDeviceDetails(generics.GenericAPIView):
         queryset = devices.objects.none()  # Initialize an empty queryset
         # for i in names:
         if name:
-            queryset |= devices.objects.filter(name__icontains=name)
+            queryset |= devices.objects.filter(name__icontains='MBMT')
         else:
-            queryset |= devices.objects.all()
+           queryset |= devices.objects.filter(name__icontains='MBMT')
             
         return queryset
     
