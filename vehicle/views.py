@@ -80,9 +80,7 @@ class DeviceDetailsView(APIView):
             return Response(response.content, status=response.status_code)
         
         
-
-
-class ViewDeviceDetails(generics.GenericAPIView):
+class ViewDeviceDetails(APIView):
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -191,8 +189,74 @@ class ViewDeviceDetails(generics.GenericAPIView):
          
         return Response(data_list)
 
-        
+               
+class ViewAllDeviceDetails(generics.GenericAPIView):
+    """
+    This function is used to filter the queryset based on the 'name' query parameter.
+    If 'name' is provided, it filters the devices with names containing the 'name'.
+    If 'name' is not provided, it returns all the devices.
 
+    Parameters:
+    self (ViewDeviceDetails): The instance of the ViewDeviceDetails class.
 
+    Returns:
+    queryset (QuerySet): The filtered queryset of devices.
+    """
+    def get_queryset(self):
         
-        
+        # name = self.request.query_params.get('name')
+        # names = ["MBMT-32", "MBMT-25"]
+        # queryset = devices.objects.none()  # Initialize an empty queryset
+        # # for i in names:
+        # if name:
+        #     queryset |= devices.objects.filter(name__icontains='MBMT')
+        # else:
+        queryset = devices.objects.all()
+            
+        return queryset
+    
+
+    """
+    This function is used to retrieve and serialize device details.
+    It fetches all related device details using prefetch_related and then serializes them.
+    If no device details are found, it returns an empty response.
+
+    Parameters:
+    self (ViewDeviceDetails): The instance of the ViewDeviceDetails class.
+    request (Request): The request object containing query parameters.
+
+    Returns:
+    Response: A response object containing serialized device details.
+    """
+    def get(self, request):
+        data_list = []
+        # all_devices = devices.objects.all()
+        all_devices = self.get_queryset()
+        # print(all_devices)
+        if all_devices:
+          
+            for device in all_devices:
+                device_details_serailizer = deviceDetailsSerialiser(device).data
+                today = date.today()
+                
+                try:
+                    device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
+                    device_location_serializer = DeviceLocationSerializer(device_location).data
+                except deviceLocation.DoesNotExist:
+                    device_location_serializer ={}
+
+                try:
+                    canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                    canInfo_serializer = CanInfoSerializer(canInfo_detail).data
+                except canInfo.DoesNotExist:
+                    canInfo_serializer = {}
+
+            
+                data_list.append({
+                    'device_details' : device_details_serailizer,
+                    'device_location': device_location_serializer,
+                    'canInfo' : canInfo_serializer })
+        else: 
+            return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+         
+        return Response(data_list)

@@ -64,29 +64,29 @@ class CanInfoSerializer(serializers.ModelSerializer):
         model = canInfo
         # fields = ["vehicleBattery" , "stateOfCharge" , "AMinCellVolt" , "AMinCellVolt" "APackVoltageValue" ,] 
         exclude = ["id" , "device" , "AMinCellVolt" ,
-                   "BMaxCellVolt" , "AMaxCellVolt" , "BMinCellVolt"]
+                   "BMaxCellVolt" , "AMaxCellVolt" , "BMinCellVolt" , "transactionId"]
         
 
 class AlertsSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = alerts
-        exclude = [  "device"]
+        exclude = [  "device" , "transactionId"]
         geo_field= 'location'
 
 
 class TodaysDriveSerializer(serializers.ModelSerializer):
     class Meta:
         model = todaysDrive
-        exclude = ["id"  , "device"]
+        exclude = ["id"  , "device" , "transactionId"]
 
 
 class LinksSerializer(serializers.ModelSerializer):
     class Meta:
         model = links
-        exclude = ["id" ,  "device"]
+        exclude = ["id" ,  "device" , "transactionId"]
 
 
 class DinputsSerializer(serializers.ModelSerializer):
     class Meta:
         model = dinputs
-        exclude = ["id" , "device"]
+        exclude = ["id" , "device" , "transactionId"]
