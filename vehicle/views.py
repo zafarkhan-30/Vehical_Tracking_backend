@@ -57,6 +57,7 @@ class DeviceDetailsView(APIView):
                     pass
 
                 if "location" in data:
+                    print(data)
                     device_locations.append(create_device_location(device_id, data , transactionId))
                 if "canInfo" in data:
                     canInfo_details.append(create_canInfo_object(device_id, data, transactionId))
@@ -98,13 +99,12 @@ class ViewDeviceDetails(APIView):
     def get_queryset(self):
         
         name = self.request.query_params.get('name')
-        names = ["MBMT-32", "MBMT-25"]
+        
         queryset = devices.objects.none()  # Initialize an empty queryset
-        # for i in names:
         if name:
             queryset |= devices.objects.filter(name__icontains='MBMT')
         else:
-           queryset |= devices.objects.filter(name__icontains='MBMT')
+           queryset |= devices.objects.all()
             
         return queryset
     
@@ -210,8 +210,8 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
     def get_queryset(self):
         
         name = self.request.query_params.get('name')
-        queryset = devices.objects.none()  # Initialize an empty queryset
-        # for i in names:
+        queryset = devices.objects.none()
+       
         if name:
             queryset |= devices.objects.filter(name__icontains='MBMT')
         else:
