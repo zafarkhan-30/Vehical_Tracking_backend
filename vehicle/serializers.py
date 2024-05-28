@@ -23,7 +23,7 @@ class DeviceLocationSerializer(GeoFeatureModelSerializer):
         model = deviceLocation
         # fields = "__all__"
         # exclude = ["transactionId" , "id" , ]
-        fields = ["gpsTime" , "gprsTime" , "latitude" , "longitude" , "altitude" , "heading" ,  "speedKph" ,"address",
+        fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
                    "odometer" , "gpsSignal" , "created_at" , "device_name" ,"registrationNumber" ,
                    "trackingCode" , "stateOfCharge"]
         geo_field='location'
@@ -103,7 +103,7 @@ class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
         model = deviceLocation
         # fields = "__all__"
         # exclude = ["transactionId" , "id" , ]
-        fields = ["gpsTime" , "gprsTime" , "latitude" , "longitude" , "altitude" , "heading" ,  "speedKph" ,"address",
+        fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
                    "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
         geo_field='location'
 
