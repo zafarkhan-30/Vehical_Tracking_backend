@@ -57,7 +57,7 @@ class DeviceDetailsView(APIView):
                     pass
 
                 if "location" in data:
-                    print(data)
+                    # print(data)
                     device_locations.append(create_device_location(device_id, data , transactionId))
                 if "canInfo" in data:
                     canInfo_details.append(create_canInfo_object(device_id, data, transactionId))

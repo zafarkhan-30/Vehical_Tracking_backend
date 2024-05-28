@@ -43,8 +43,8 @@ def create_device_location(device_id, location_data , transactionId):
         gpsTime= datetime.datetime.fromtimestamp(location_details.get("gpsTime")),
         gprsTime= datetime.datetime.fromtimestamp(location_details.get("gprsTime")),
         location = location , 
-        latitude=location_details.get("latitude"),
-        longitude=location_details.get("longitude"),
+        # latitude=location_details.get("latitude"),
+        # longitude=location_details.get("longitude"),
         altitude=location_details.get("altitude"),
         heading=location_details.get("heading"),
         speedKph=location_details.get("speedKph"),
@@ -88,12 +88,13 @@ def create_alerts_object(device_id , alerts_data , transactionId):
     lat = float(alerts_details.get("latitude"))
     long = float(alerts_details.get("longitude"))
     location = Point(long, lat, srid=4326)
+    # print(alerts_details)
     return alerts(
          device = device_instance ,
          transactionId = transactionId ,
          timestamp =alerts_details.get('timestamp'),
-         latitude= alerts_details.get('latitude'),
-         longitude=alerts_details.get('longitude'),
+        #  latitude= alerts_details.get('latitude'),
+        #  longitude=alerts_details.get('longitude'),
          location = location , 
          address=alerts_details.get('address'),
          alarmType =alerts_details.get('alarmType'),

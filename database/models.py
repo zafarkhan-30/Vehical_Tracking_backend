@@ -1,7 +1,8 @@
 from django.db import models
 import datetime
 from django.contrib.gis.db import models
-
+from django.db.utils import DataError
+from decimal import Decimal
 import pytz
 
 # Create your models here.
@@ -30,8 +31,8 @@ class deviceLocation(models.Model):
     transactionId = models.CharField(max_length=100 , null = False , blank = False)
     gpsTime = models.DateTimeField( )
     gprsTime = models.DateTimeField()
-    latitude = models.DecimalField(max_digits=20, decimal_places=18)
-    longitude = models.DecimalField(max_digits=20, decimal_places=18)
+    # latitude = models.DecimalField(max_digits=20, decimal_places=18)
+    # longitude = models.DecimalField(max_digits=20, decimal_places=18)
     location = models.PointField(null= True , blank= True)
     altitude = models.IntegerField()
     heading = models.IntegerField()
@@ -68,14 +69,24 @@ class alerts(models.Model):
     device = models.ForeignKey(devices , related_name= "device_alerts" , on_delete = models.CASCADE , null = True)
     transactionId = models.CharField(max_length=100 , null = False , blank = False)
     timestamp = models.BigIntegerField(null = True)
-    latitude= models.DecimalField(max_digits=20, decimal_places=18 ,null = True)
-    longitude= models.DecimalField(max_digits=20, decimal_places=18 , null = True)
+    # latitude= models.DecimalField(max_digits=17, decimal_places=15 ,null = True)
+    # longitude= models.DecimalField(max_digits=17, decimal_places=15, null = True)
     location = models.PointField(null= True , blank= True)
     address = models.CharField(max_length=1000 )
     alarmType = models.IntegerField(null = True)
     limit = models.IntegerField(null = True)
     severity = models.IntegerField(null = True)
     created_at = models.DateTimeField(auto_now=True)
+
+
+    def save(self, *args, **kwargs):
+        try:
+            super().save(*args, **kwargs)
+        except DataError as e:
+            if e.args[0].startswith('DETAIL: A field with precision 20, scale 18 must round to an absolute value less than 10^2'):
+                self.latitude = Decimal(str(self.latitude).round(2))
+                self.longitude = Decimal(str(self.longitude).round(2))
+                super().save(*args, **kwargs)
 
 
 class todaysDrive(models.Model):
