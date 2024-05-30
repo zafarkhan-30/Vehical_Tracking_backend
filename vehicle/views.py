@@ -196,7 +196,7 @@ class ViewDeviceDetails(APIView):
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
 
 
-    throttle_classes = [AnonRateThrottle]
+    # throttle_classes = [AnonRateThrottle]
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
