@@ -22,7 +22,7 @@ from rest_framework.throttling import AnonRateThrottle
 
 
 
-class DeviceDetailsView(APIView):
+class PostDeviceDetailsView(APIView):
 
     def get(self, request):
         refresh_token = refresh_access_token()
@@ -84,7 +84,7 @@ class DeviceDetailsView(APIView):
             return Response(response.content, status=response.status_code)
         
         
-class ViewDeviceDetails(APIView):
+class ViewDeviceAllDetails(APIView):
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -268,6 +268,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
         return Response(data_list)
     
 class ViewAmnexDeviceDetails(APIView):
+
     def get_queryset(self):
         
         # name = self.request.query_params.get('name')
@@ -363,3 +364,10 @@ class ViewAmnexDeviceDetails(APIView):
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
          
         return Response(data_list)
+    
+
+
+
+class GetDeviceParametersDetails(generics.ListAPIView):
+    serializer_class = deviceDetailsSerialiser
+    queryset = devices.objects.all()
