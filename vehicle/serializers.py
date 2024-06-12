@@ -127,7 +127,7 @@ class DinputsSerializer(serializers.ModelSerializer):
 class DataListSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterDeviceDetails
-        exclude = ("id",)
+        exclude = ("id", "device")
         
         # depth = 1
 
