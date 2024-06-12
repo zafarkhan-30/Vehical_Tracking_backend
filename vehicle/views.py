@@ -232,17 +232,16 @@ class ViewDeviceAllDetails(APIView):
                 if start_date and end_date:
                     try:
                         master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__range=[start_date , end_date]).latest("created_at")
-                        data_list_serializer = DataListSerializer(master_data_list).data
+                        
                     except:
                         continue
                 else:
                     try:
                         master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                        data_list_serializer = DataListSerializer(master_data_list).data
                     except:
                         continue
-                
 
+                data_list_serializer = DataListSerializer(master_data_list).data
                 data_list.append({
                     'data' : data_list_serializer
 
