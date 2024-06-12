@@ -94,18 +94,18 @@ class DinputsSerializer(serializers.ModelSerializer):
 
 
 
-class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
-    # device_name = serializers.SerializerMethodField()
-    # registrationNumber = serializers.SerializerMethodField()
-    # trackingCode = serializers.SerializerMethodField()
-    stateOfCharge = serializers.SerializerMethodField()
-    class Meta:     
-        model = deviceLocation
-        # fields = "__all__"
-        # exclude = ["transactionId" , "id" , ]
-        fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
-                   "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
-        geo_field='location'
+# class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
+#     # device_name = serializers.SerializerMethodField()
+#     # registrationNumber = serializers.SerializerMethodField()
+#     # trackingCode = serializers.SerializerMethodField()
+#     stateOfCharge = serializers.SerializerMethodField()
+#     class Meta:     
+#         model = deviceLocation
+#         # fields = "__all__"
+#         # exclude = ["transactionId" , "id" , ]
+#         fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
+#                    "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
+#         geo_field='location'
 
     def get_stateOfCharge(self, value):
         try:
@@ -115,3 +115,32 @@ class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
             state_of_charge_values = None
       
         return state_of_charge_values
+    
+
+# class post_test_deviceserialzier(serializers.ModelSerializer):
+#     class Meta:
+#         model = test_models
+#         fields = "__all__"
+
+
+
+class DataListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MasterDeviceDetails
+        exclude = ("id",)
+        
+        # depth = 1
+
+    
+class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
+    # device_name = serializers.SerializerMethodField()
+    # registrationNumber = serializers.SerializerMethodField()
+    # trackingCode = serializers.SerializerMethodField()
+    # stateOfCharge = serializers.SerializerMethodField()
+    class Meta:     
+        model = MasterDeviceDetails
+        # fields = "__all__"
+        # exclude = ["transactionId" , "id" , ]
+        fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
+                   "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
+        geo_field='device_location'

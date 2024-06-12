@@ -18,7 +18,41 @@ from VehicalTracking import settings
 from datetime import datetime, date
 from django.utils import timezone
 from rest_framework.throttling import AnonRateThrottle
+from rest_framework.parsers import MultiPartParser
 
+
+
+
+class PostMasterDeviceData(APIView):
+
+    def get(self , request):
+        refresh_token = refresh_access_token()
+        response = get_device_Data(refresh_token)
+        # print(response)
+
+        if response.status_code == 200:
+
+            devices_data = json.loads(response.content).get('data')
+            # print(devices_data)
+
+            master_data_list = []
+
+            for data in devices_data:
+                device_id = data.get("id")
+
+                if "deviceDetails" in data:
+                    create_device_object(data)
+                
+                master_data_list.append(create_master_device_details(device_id , data))
+                
+            master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
+
+            return Response({"message": "device data created successfully"}, status=200)
+
+        else:
+            return Response(response.content, status=response.status_code)
+                
+                    
 
 
 
@@ -55,9 +89,7 @@ class PostDeviceDetailsView(APIView):
                         deviceStatus_details.append(create_device_status(device_id, data, transactionId))
                 except:
                     pass
-
                 if "location" in data:
-                    # print(data)
                     device_locations.append(create_device_location(device_id, data , transactionId))
                 if "canInfo" in data:
                     canInfo_details.append(create_canInfo_object(device_id, data, transactionId))
@@ -108,7 +140,6 @@ class ViewDeviceAllDetails(APIView):
             
         return queryset
     
-
     """
     This function is used to retrieve and serialize device details.
     It fetches all related device details using prefetch_related and then serializes them.
@@ -132,67 +163,77 @@ class ViewDeviceAllDetails(APIView):
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
                 
-                try:
-                    # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
-                    device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
-                    device_location_serializer = DeviceLocationSerializer(device_location).data
-                except deviceLocation.DoesNotExist:
-                    device_location_serializer ={}
-
-                try:
-                    device_status = deviceStatus.objects.filter(device_id=device , created_at__date=today).latest("created_at")
-                    device_status_serializer = DeviceStatusSerializer(device_status).data
-                except deviceStatus.DoesNotExist:
-                    device_status_serializer = {}
-
-
-                try:
-                    canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                except canInfo.DoesNotExist:
-                    canInfo_serializer = {}
-
-                try:
-                    alerts_detail = alerts.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    alerts_serializer = AlertsSerializer(alerts_detail).data
-                except alerts.DoesNotExist:
-                    alerts_serializer = {}
                 
-                try:
-                    todaysDrive_detail = todaysDrive.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
-                except todaysDrive.DoesNotExist:
-                    todaysDrive_serializer = {}
-                
-                try:
-                    links_detail = links.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    links_serializer = LinksSerializer(links_detail).data
+                # try:
+                #     # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
+                #     device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
+                #     device_location_serializer = DeviceLocationSerializer(device_location).data
+                # except deviceLocation.DoesNotExist:
+                #     device_location_serializer ={}
 
-                except links.DoesNotExist:
-                    links_serializer = {}
+                # try:
+                #     device_status = deviceStatus.objects.filter(device_id=device , created_at__date=today).latest("created_at")
+                #     device_status_serializer = DeviceStatusSerializer(device_status).data
+                # except deviceStatus.DoesNotExist:
+                #     device_status_serializer = {}
+
+
+                # try:
+                #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
+                # except canInfo.DoesNotExist:
+                #     canInfo_serializer = {}
+
+                # try:
+                #     alerts_detail = alerts.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     alerts_serializer = AlertsSerializer(alerts_detail).data
+                # except alerts.DoesNotExist:
+                #     alerts_serializer = {}
+                
+                # try:
+                #     todaysDrive_detail = todaysDrive.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
+                # except todaysDrive.DoesNotExist:
+                #     todaysDrive_serializer = {}
+                
+                # try:
+                #     links_detail = links.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     links_serializer = LinksSerializer(links_detail).data
+
+                # except links.DoesNotExist:
+                #     links_serializer = {}
+                # try:
+                #     dinputs_detail = dinputs.objects.filter(device_id = device , created_at__date = today).latest("transactionId")
+                #     dinputs_serializer = DinputsSerializer(dinputs_detail).data
+                # except dinputs.DoesNotExist:
+                #     dinputs_serializer = {}
+
+
+                print(device)
                 try:
-                    dinputs_detail = dinputs.objects.filter(device_id = device , created_at__date = today).latest("transactionId")
-                    dinputs_serializer = DinputsSerializer(dinputs_detail).data
-                except dinputs.DoesNotExist:
-                    dinputs_serializer = {}
+                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                    data_list_serializer = DataListSerializer(master_data_list).data
+                except:
+                    continue
+                
 
                 data_list.append({
-                    'device_details' : device_details_serailizer,
-                    'device_status': device_status_serializer,
-                    'device_location': device_location_serializer,
-                    'canInfo' : canInfo_serializer,
-                    "alerts" : alerts_serializer , 
-                    "todaysDrive" : todaysDrive_serializer,
-                    "links" : links_serializer,
-                    "dinputs" : dinputs_serializer
+                    # 'device_details' : device_details_serailizer,
+                    'data' : data_list_serializer
+                    # 'device_status': device_status_serializer,
+                    # 'device_location': device_location_serializer,
+                    # 'canInfo' : canInfo_serializer,
+                    # "alerts" : alerts_serializer , 
+                    # "todaysDrive" : todaysDrive_serializer,
+                    # "links" : links_serializer,
+                    # "dinputs" : dinputs_serializer
 
                 })
         else: 
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
          
         return Response(data_list)
-
-               
+             
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
 
 
@@ -243,12 +284,14 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
             for device in all_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
+                print(device)
                 
                 try:
-                    device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
+                    device_location = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
+                    
                     device_location_serializer = MBMTDeviceLocationSerializer(device_location).data
-                except deviceLocation.DoesNotExist:
-                    device_location_serializer ={}
+                except:
+                    continue
 
                 # try:
                 #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
@@ -305,59 +348,66 @@ class ViewAmnexDeviceDetails(APIView):
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
                 
-                try:
-                    # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
-                    device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
-                    device_location_serializer = DeviceLocationSerializer(device_location).data
-                except deviceLocation.DoesNotExist:
-                    device_location_serializer ={}
+                # try:
+                #     # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
+                #     device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
+                #     device_location_serializer = DeviceLocationSerializer(device_location).data
+                # except deviceLocation.DoesNotExist:
+                #     device_location_serializer ={}
 
-                try:
-                    device_status = deviceStatus.objects.filter(device_id=device , created_at__date=today).latest("created_at")
-                    device_status_serializer = DeviceStatusSerializer(device_status).data
-                except deviceStatus.DoesNotExist:
-                    device_status_serializer = {}
+                # try:
+                #     device_status = deviceStatus.objects.filter(device_id=device , created_at__date=today).latest("created_at")
+                #     device_status_serializer = DeviceStatusSerializer(device_status).data
+                # except deviceStatus.DoesNotExist:
+                #     device_status_serializer = {}
 
 
-                try:
-                    canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                except canInfo.DoesNotExist:
-                    canInfo_serializer = {}
+                # try:
+                #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
+                # except canInfo.DoesNotExist:
+                #     canInfo_serializer = {}
 
-                try:
-                    alerts_detail = alerts.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    alerts_serializer = AlertsSerializer(alerts_detail).data
-                except alerts.DoesNotExist:
-                    alerts_serializer = {}
+                # try:
+                #     alerts_detail = alerts.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     alerts_serializer = AlertsSerializer(alerts_detail).data
+                # except alerts.DoesNotExist:
+                #     alerts_serializer = {}
                 
-                try:
-                    todaysDrive_detail = todaysDrive.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
-                except todaysDrive.DoesNotExist:
-                    todaysDrive_serializer = {}
+                # try:
+                #     todaysDrive_detail = todaysDrive.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
+                # except todaysDrive.DoesNotExist:
+                #     todaysDrive_serializer = {}
                 
-                try:
-                    links_detail = links.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    links_serializer = LinksSerializer(links_detail).data
+                # try:
+                #     links_detail = links.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                #     links_serializer = LinksSerializer(links_detail).data
 
-                except links.DoesNotExist:
-                    links_serializer = {}
+                # except links.DoesNotExist:
+                #     links_serializer = {}
+                # try:
+                #     dinputs_detail = dinputs.objects.filter(device_id = device , created_at__date = today).latest("transactionId")
+                #     dinputs_serializer = DinputsSerializer(dinputs_detail).data
+                # except dinputs.DoesNotExist:
+                #     dinputs_serializer = {}
+
                 try:
-                    dinputs_detail = dinputs.objects.filter(device_id = device , created_at__date = today).latest("transactionId")
-                    dinputs_serializer = DinputsSerializer(dinputs_detail).data
-                except dinputs.DoesNotExist:
-                    dinputs_serializer = {}
+                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                    data_list_serializer = DataListSerializer(master_data_list).data
+                except:
+                    continue
 
                 data_list.append({
                     'device_details' : device_details_serailizer,
-                    'device_status': device_status_serializer,
-                    'device_location': device_location_serializer,
-                    'canInfo' : canInfo_serializer,
-                    "alerts" : alerts_serializer , 
-                    "todaysDrive" : todaysDrive_serializer,
-                    "links" : links_serializer,
-                    "dinputs" : dinputs_serializer
+                    'data' : data_list_serializer
+                    # 'device_status': device_status_serializer,
+                    # 'device_location': device_location_serializer,
+                    # 'canInfo' : canInfo_serializer,
+                    # "alerts" : alerts_serializer , 
+                    # "todaysDrive" : todaysDrive_serializer,
+                    # "links" : links_serializer,
+                    # "dinputs" : dinputs_serializer
 
                 })
         else: 
@@ -371,3 +421,16 @@ class ViewAmnexDeviceDetails(APIView):
 class GetDeviceParametersDetails(generics.ListAPIView):
     serializer_class = deviceDetailsSerialiser
     queryset = devices.objects.all()
+
+
+
+# class post_test_device(generics.GenericAPIView):
+#     serializer_class = post_test_deviceserialzier
+#     parser_classes = [MultiPartParser]
+#     def post(self, request):
+#         serializer = self.get_serializer(data = request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+

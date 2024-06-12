@@ -44,6 +44,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,9 +57,10 @@ INSTALLED_APPS = [
     'database',
     'vehicle',
     'drf_yasg',
-     'django_filters',
-     'corsheaders',
-      'django_crontab',
+    'django_filters',
+    'corsheaders',
+    'django_crontab',
+    # 'channels',
 ]
 
 MIDDLEWARE = [
@@ -98,7 +100,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
+ASGI_APPLICATION = 'VehicalTracking.asgi.application'
 
+
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -108,6 +118,17 @@ WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
 #         'ENGINE': 'django.db.backends.sqlite3',
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
+# }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("LOCAL_DATABASE_NAME"),
+#         'USER': env("LOCAL_DATABASE_USER"),
+#         'PASSWORD': env("LOCAL_DATABASE_PASSWORD"),
+#         'HOST': env("LOCAL_DATABASE_HOST"),
+#         'PORT': env("PROD_DATABASE_PORT"),
+#     },
 # }
 
 DATABASES = {
@@ -186,8 +207,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
+
+MEDIA_ROOT = BASE_DIR /"media"
+MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

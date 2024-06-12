@@ -1,7 +1,7 @@
 import requests
 import certifi
 def run_device_details_view():
-    url = "https://timscan.transvolt.in/vehical/post-Device-Details/"
+    url = "https://timscan.transvolt.in/vehical/post-Master-Device-Data/"
     headers = {"Content-Type": "application/json"}
     log_file = "/tmp/cron_job_output.log"
 
