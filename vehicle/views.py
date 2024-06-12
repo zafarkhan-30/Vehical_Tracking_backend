@@ -181,7 +181,7 @@ class PostDeviceDetailsView(APIView):
         
         
 class ViewDeviceAllDetails(APIView):
-    permission_classes = [IsAuthenticated , IsAchargeZone  | IsBattery_IQ]
+    permission_classes = [IsAuthenticated , IsAchargeZone  | IsBattery_IQ | IsAmnex ]
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -218,89 +218,44 @@ class ViewDeviceAllDetails(APIView):
     Response: A response object containing serialized device details.
     """
     def get(self, request):
+
         data_list = []
-        # all_devices = devices.objects.all()
+
         all_devices = self.get_queryset()
-        # print(all_devices)
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
         if all_devices:
-          
+            
             for device in all_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
-                
-                
-                # try:
-                #     # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
-                #     device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
-                #     device_location_serializer = DeviceLocationSerializer(device_location).data
-                # except deviceLocation.DoesNotExist:
-                #     device_location_serializer ={}
-
-                # try:
-                #     device_status = deviceStatus.objects.filter(device_id=device , created_at__date=today).latest("created_at")
-                #     device_status_serializer = DeviceStatusSerializer(device_status).data
-                # except deviceStatus.DoesNotExist:
-                #     device_status_serializer = {}
-
-
-                # try:
-                #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                # except canInfo.DoesNotExist:
-                #     canInfo_serializer = {}
-
-                # try:
-                #     alerts_detail = alerts.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     alerts_serializer = AlertsSerializer(alerts_detail).data
-                # except alerts.DoesNotExist:
-                #     alerts_serializer = {}
-                
-                # try:
-                #     todaysDrive_detail = todaysDrive.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
-                # except todaysDrive.DoesNotExist:
-                #     todaysDrive_serializer = {}
-                
-                # try:
-                #     links_detail = links.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     links_serializer = LinksSerializer(links_detail).data
-
-                # except links.DoesNotExist:
-                #     links_serializer = {}
-                # try:
-                #     dinputs_detail = dinputs.objects.filter(device_id = device , created_at__date = today).latest("transactionId")
-                #     dinputs_serializer = DinputsSerializer(dinputs_detail).data
-                # except dinputs.DoesNotExist:
-                #     dinputs_serializer = {}
-
-
-                print(device)
-                try:
-                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    data_list_serializer = DataListSerializer(master_data_list).data
-                except:
-                    continue
+                if start_date and end_date:
+                    try:
+                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__range=[start_date , end_date]).latest("created_at")
+                        data_list_serializer = DataListSerializer(master_data_list).data
+                    except:
+                        continue
+                else:
+                    try:
+                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                        data_list_serializer = DataListSerializer(master_data_list).data
+                    except:
+                        continue
                 
 
                 data_list.append({
-                    # 'device_details' : device_details_serailizer,
                     'data' : data_list_serializer
-                    # 'device_status': device_status_serializer,
-                    # 'device_location': device_location_serializer,
-                    # 'canInfo' : canInfo_serializer,
-                    # "alerts" : alerts_serializer , 
-                    # "todaysDrive" : todaysDrive_serializer,
-                    # "links" : links_serializer,
-                    # "dinputs" : dinputs_serializer
 
                 })
-        else: 
+
+        if len(data_list) ==0:
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+        else:
          
-        return Response(data_list)
+             return Response(data_list)
              
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated , IsMBMT]
+    permission_classes = [IsAuthenticated , IsMBMT | IsAmnex]
 
     # throttle_classes = [AnonRateThrottle]
     """
@@ -376,7 +331,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
         return Response(data_list)
     
 class ViewAmnexDeviceDetails(APIView):
-    permission_classes = [IsAuthenticated , IsAmnex]
+    permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
 
     def get_queryset(self):
         
