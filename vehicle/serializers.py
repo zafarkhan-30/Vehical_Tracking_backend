@@ -43,7 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("groups")
         return User.objects.create_user(**validated_data)
     
-    
+
 
 class LoginSerializer(serializers.Serializer):
 
@@ -179,9 +179,9 @@ class DinputsSerializer(serializers.ModelSerializer):
 class DataListSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterDeviceDetails
-        exclude = ("id", "device")
+        exclude = ("id")
         
-        # depth = 1
+        depth = 1
 
     
 class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
