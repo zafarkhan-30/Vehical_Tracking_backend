@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework import generics 
-import requests 
 from rest_framework.response import Response
 import json
 from database.models import *
@@ -9,18 +8,86 @@ import time
 from .utils import *
 from .serializers import *
 import uuid
-from rest_framework import status
-from rest_framework import filters
 from rest_framework.views import APIView
-# Create your views here.
-import datetime
-from VehicalTracking import settings
-from datetime import datetime, date
-from django.utils import timezone
-from rest_framework.throttling import AnonRateThrottle
+from datetime import  date
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.models import Group
+from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
+from .permissions import *
 
+class UserRegister(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]    
 
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            try:
+                group_name = serializer.validated_data.get('groups')
+                usergroup = Group.objects.get(name= group_name)
+            
+                user = serializer.save()
+        
+                if usergroup:
+                    user.groups.add(usergroup)
+                
+
+                return Response({'message': 'Registration Successfull' , 
+                                    "status" : "success" }, status=200)
+            except:
+                return Response({'message': 'Please select any one group',
+                                 "status" : "error"}, status=400)
+        else:
+            key, value =list(serializer.errors.items())[0]
+            try:
+                key , value = list(value[0].items())[0]
+                error_message =  str(value[0])
+            except Exception as e:
+                try:
+                     error_message = str(key) + " ," +str(value[0])
+                except:
+                    key , value = list(value[1].items())[0]
+                    error_message = str(key) + " ," +str(value[0])
+            
+            return Response({'message': error_message, 
+                             "status" : "error"}, status=400)
+
+class LoginView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+    # parser_classes = [JSONParser]
+
+    def post(self , request):
+        serializer = LoginSerializer(data= request.data)
+        if serializer.is_valid():
+            username = serializer.data.get('username')
+            password = serializer.data.get('password')
+           
+            user = authenticate(username=username , password=password)
+            if user is not None:
+                user1 = User.objects.filter(username=username)
+                serializer2 = RegisterSerializer(user1 ,many=True)
+                try:
+                    token = Token.objects.create(user=user)
+                except:
+                    token = Token.objects.get(user=user)
+
+                return Response({
+                                'Token':token.key,
+                                } , 
+                                status=200)
+            else:
+                return Response({'status': 'error',
+                                'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # print(serializer.errors)
+            return Response({'status': 'error',
+                            'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostMasterDeviceData(APIView):
@@ -51,10 +118,7 @@ class PostMasterDeviceData(APIView):
 
         else:
             return Response(response.content, status=response.status_code)
-                
-                    
-
-
+ 
 
 class PostDeviceDetailsView(APIView):
 
@@ -117,6 +181,7 @@ class PostDeviceDetailsView(APIView):
         
         
 class ViewDeviceAllDetails(APIView):
+    permission_classes = [IsAuthenticated , IsAchargeZone  | IsBattery_IQ]
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -235,7 +300,7 @@ class ViewDeviceAllDetails(APIView):
         return Response(data_list)
              
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
-
+    permission_classes = [IsAuthenticated , IsMBMT]
 
     # throttle_classes = [AnonRateThrottle]
     """
@@ -311,6 +376,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
         return Response(data_list)
     
 class ViewAmnexDeviceDetails(APIView):
+    permission_classes = [IsAuthenticated , IsAmnex]
 
     def get_queryset(self):
         
@@ -419,6 +485,7 @@ class ViewAmnexDeviceDetails(APIView):
 
 
 class GetDeviceParametersDetails(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = deviceDetailsSerialiser
     queryset = devices.objects.all()
 

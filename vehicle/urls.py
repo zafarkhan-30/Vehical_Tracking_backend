@@ -1,7 +1,11 @@
 from django.urls import path
 from .views import *
 
-urlpatterns = [
+urlpatterns = [ 
+
+
+    path('registeration/', UserRegister.as_view(),  ),
+    path('token/', LoginView.as_view(),  ),
     path('post-Device-Details/', PostDeviceDetailsView.as_view(),  ),
     path('post-Master-Device-Data/', PostMasterDeviceData.as_view(),  ),
     path('Get-Device-Details/', ViewDeviceAllDetails.as_view(),  ),

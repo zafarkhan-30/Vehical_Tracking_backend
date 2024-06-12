@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'django_crontab',
+    'rest_framework.authtoken',
     # 'channels',
 ]
 
@@ -145,6 +146,21 @@ DATABASES = {
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  
+    ],
+
+}
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
+
     # 'DEFAULT_THROTTLE_CLASSES': [
     #     'rest_framework.throttling.UserRateThrottle',
     #     'rest_framework.throttling.AnonRateThrottle',
@@ -154,7 +170,7 @@ REST_FRAMEWORK = {
     #     'user': '100/day',   
     #     'anon': '5000/day',   
     # }
-}
+
 
 # DATABASES = {
 #     'default': {
