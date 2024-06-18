@@ -13,7 +13,7 @@ from datetime import  date
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny , IsAuthenticatedOrReadOnly
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
@@ -254,7 +254,7 @@ class ViewDeviceAllDetails(APIView):
              return Response(data_list)
              
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated , IsMBMT | IsAmnex]
+    # permission_classes = [IsAuthenticatedOrReadOnly , IsMBMT | IsAmnex ]
 
     # throttle_classes = [AnonRateThrottle]
     """
@@ -295,16 +295,12 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
     """
     def get(self, request):
         data_list = []
-        # all_devices = devices.objects.all()
         all_devices = self.get_queryset()
-        # print(all_devices)
         if all_devices:
           
             for device in all_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
-                print(device)
-                
                 try:
                     device_location = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
                     
@@ -312,13 +308,6 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
                 except:
                     continue
 
-                # try:
-                #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                # except canInfo.DoesNotExist:
-                #     canInfo_serializer = {}
-
-            
                 data_list.append({
                     'device_details' : device_details_serailizer,
                     'device_location': device_location_serializer,

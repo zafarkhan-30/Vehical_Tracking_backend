@@ -203,6 +203,7 @@ def create_master_device_details(device_id , data):
         distanceToEmpty=canInfo_details.get("distanceToEmpty"),
 
 
+        timestamp =alerts_details.get('timestamp'),
         alert_location = alert_location , 
         alert_address=alerts_details.get('address'),
         alarmType =alerts_details.get('alarmType'),
