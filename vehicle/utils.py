@@ -35,3 +35,20 @@ def get_device_Data(refresh_token):
 
     response = requests.get(url, headers=headers)
     return response
+
+
+
+from django.core.mail import EmailMessage
+from VehicalTracking.settings import EMAIL_HOST_USER
+
+
+class util:
+    @staticmethod
+    def send_email(data):
+        email = EmailMessage(
+            subject=data['subject'],
+            body= data['body'],
+            from_email = EMAIL_HOST_USER,
+            to = [data['to_email']]
+        )
+        email.send()

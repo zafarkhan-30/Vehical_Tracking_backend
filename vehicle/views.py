@@ -18,6 +18,7 @@ from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from .permissions import *
+import os
 
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -115,8 +116,39 @@ class PostMasterDeviceData(APIView):
             master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
 
             return Response({"message": "device data created successfully"}, status=200)
-
         else:
+
+            # Check if an email was sent today
+            log_file = "C:/Jafar/Vehical-Tracking/tmp/email_log.txt"
+            now = datetime.datetime.now()
+            email_sent_recently = False
+
+            try:
+                # Check if the log file exists and is not empty
+                if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
+                    with open(log_file, "r") as f:
+                        last_sent_time_str = f.read().strip()
+                        last_sent_time = datetime.datetime.fromisoformat(last_sent_time_str)
+                        time_diff = now - last_sent_time
+                        if time_diff.total_seconds() < 7200:  # 2 hours * 60 minutes * 60 seconds
+                            email_sent_recently = True
+            except (FileNotFoundError, ValueError):
+                pass
+
+            if not email_sent_recently:
+                subject = json.loads(response.content).get('error')
+                error_body = json.loads(response.content).get('error_description')
+                data = {
+                    'subject': subject,
+                    'body': error_body,
+                    'to_email': 'jafar.k@transvolt.in'
+                }
+                util.send_email(data)
+                
+                # Update the log file with the current timestamp
+                with open(log_file, "w") as f:
+                    f.write(now.isoformat())
+
             return Response(response.content, status=response.status_code)
  
 
