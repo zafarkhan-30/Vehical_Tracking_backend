@@ -357,50 +357,6 @@ class ViewAmnexDeviceDetails(APIView):
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
                 
-                # try:
-                #     # device_location = deviceLocation.objects.filter(device=device ,created_at = datetime.datetime.today()).latest("created_at")
-                #     device_location = deviceLocation.objects.filter(device=device, created_at__date=today).latest("created_at")
-                #     device_location_serializer = DeviceLocationSerializer(device_location).data
-                # except deviceLocation.DoesNotExist:
-                #     device_location_serializer ={}
-
-                # try:
-                #     device_status = deviceStatus.objects.filter(device_id=device , created_at__date=today).latest("created_at")
-                #     device_status_serializer = DeviceStatusSerializer(device_status).data
-                # except deviceStatus.DoesNotExist:
-                #     device_status_serializer = {}
-
-
-                # try:
-                #     canInfo_detail = canInfo.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     canInfo_serializer = CanInfoSerializer(canInfo_detail).data
-                # except canInfo.DoesNotExist:
-                #     canInfo_serializer = {}
-
-                # try:
-                #     alerts_detail = alerts.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     alerts_serializer = AlertsSerializer(alerts_detail).data
-                # except alerts.DoesNotExist:
-                #     alerts_serializer = {}
-                
-                # try:
-                #     todaysDrive_detail = todaysDrive.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     todaysDrive_serializer = TodaysDriveSerializer(todaysDrive_detail).data
-                # except todaysDrive.DoesNotExist:
-                #     todaysDrive_serializer = {}
-                
-                # try:
-                #     links_detail = links.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                #     links_serializer = LinksSerializer(links_detail).data
-
-                # except links.DoesNotExist:
-                #     links_serializer = {}
-                # try:
-                #     dinputs_detail = dinputs.objects.filter(device_id = device , created_at__date = today).latest("transactionId")
-                #     dinputs_serializer = DinputsSerializer(dinputs_detail).data
-                # except dinputs.DoesNotExist:
-                #     dinputs_serializer = {}
-
                 try:
                     master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
                     data_list_serializer = DataListSerializer(master_data_list).data
@@ -444,3 +400,40 @@ class GetDeviceParametersDetails(generics.ListAPIView):
 #             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+
+from openpyxl import Workbook
+from django.http import HttpResponse
+
+
+class Getdatafordate(generics.GenericAPIView):
+    def get( self, request, id , date):
+        master_data_list = MasterDeviceDetails.objects.filter(device = id , created_at__date = date)
+        data_list_serializer = getDataListSerializer(master_data_list , many = True ).data
+
+
+        # Create an Excel workbook and add a worksheet
+        # wb = Workbook()
+        # ws = wb.active
+        # ws.title = "Data"
+
+        # # Add headers to the Excel file
+        # headers = list(data_list_serializer[0].keys()) if data_list_serializer else []
+        # ws.append(headers)
+
+        # # Add data rows to the Excel file
+        # for data in data_list_serializer:
+        #     row = []
+        #     for header in headers:
+        #         value = data.get(header, '')
+        #         # Convert GeoJsonDict or other non-serializable types to string
+        #         if isinstance(value, dict):
+        #             value = str(value)
+        #         row.append(value)
+        #     ws.append(row)
+
+        # # Save the Excel file to a BytesIO buffer
+        # response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        # response['Content-Disposition'] = f'attachment; filename="data_{id}_{date}.xlsx"'
+        # wb.save(response)
+
+        return Response(data_list_serializer)

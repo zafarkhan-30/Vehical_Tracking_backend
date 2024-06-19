@@ -181,8 +181,15 @@ class DataListSerializer(serializers.ModelSerializer):
         model = MasterDeviceDetails
         exclude = ("id" ,'device')
         
-        # depth = 1
+        depth = 1
 
+
+class getDataListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MasterDeviceDetails
+        exclude = ("id" , )
+
+        depth = 1
     
 class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
     # device_name = serializers.SerializerMethodField()

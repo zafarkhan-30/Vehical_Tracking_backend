@@ -148,12 +148,27 @@ def create_master_device_details(device_id , data):
     status = data.get("status")
 
     location_details = data.get("location", {})
-    lat = float(location_details.get("latitude"))
-    long = float(location_details.get("longitude"))
+    gps_time = location_details.get("gpsTime")
+    gprs_time = location_details.get("gprsTime")
+
+    try:
+        gps_time = datetime.datetime.fromtimestamp(gps_time) if gps_time else None
+    except (ValueError, TypeError):
+        gps_time = None
+
+    try:
+        gprs_time = datetime.datetime.fromtimestamp(gprs_time) if gprs_time else None
+    except (ValueError, TypeError):
+        gprs_time = None
+    try:
+        lat = float(alerts_details.get("latitude"))
+        long = float(alerts_details.get("longitude"))
+    except:
+        lat =  0
+        long = 0
+
     device_location = Point(long, lat, srid=4326)
-
     canInfo_details = data.get("canInfo", {})
-
     alerts_details = data.get("alerts", {})
     try:
         lat = float(alerts_details.get("latitude"))
@@ -172,8 +187,9 @@ def create_master_device_details(device_id , data):
         active = active ,
         status = status,
 
-        gpsTime= datetime.datetime.fromtimestamp(location_details.get("gpsTime")),
-        gprsTime= datetime.datetime.fromtimestamp(location_details.get("gprsTime")),
+        gpsTime= gps_time , 
+        gprsTime= gprs_time ,
+
         device_location = device_location , 
    
         altitude=location_details.get("altitude"),

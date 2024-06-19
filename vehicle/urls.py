@@ -12,6 +12,6 @@ urlpatterns = [
     path('Get-AllMBMTDevice-Details/', ViewAllMBMTDeviceDetails.as_view(),  ),
     path('Get-AmnexDevice-Details/', ViewAmnexDeviceDetails.as_view(),  ),
     path('Get-Device-parameters-Details/', GetDeviceParametersDetails.as_view(),  ),
-    # path('Get-Device-post_test_device-Details/', post_test_device.as_view(),  ),
+    path('Get-Get-Device-data-Details/<int:id>/<str:date>/', Getdatafordate.as_view(),  ),
 ]
             
