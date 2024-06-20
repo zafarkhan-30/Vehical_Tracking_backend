@@ -19,7 +19,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from .permissions import *
 import os
-
+from VehicalTracking import settings
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [IsAuthenticated]
@@ -68,7 +68,7 @@ class LoginView(generics.GenericAPIView):
         if serializer.is_valid():
             username = serializer.data.get('username')
             password = serializer.data.get('password')
-           
+            
             user = authenticate(username=username , password=password)
             if user is not None:
                 user1 = User.objects.filter(username=username)
@@ -83,9 +83,12 @@ class LoginView(generics.GenericAPIView):
                                 } , 
                                 status=200)
             else:
+                
                 return Response({'status': 'error',
                                 'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
         else:
+            
+            
             # print(serializer.errors)
             return Response({'status': 'error',
                             'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
@@ -119,7 +122,9 @@ class PostMasterDeviceData(APIView):
         else:
 
             # Check if an email was sent today
-            log_file = "C:/Jafar/Vehical-Tracking/tmp/email_log.txt"
+            # log_file = "/tmp/email_log.txt"
+            log_file = os.path.join(settings.BASE_DIR, "tmp/email_log.txt")
+            print(log_file)
             now = datetime.datetime.now()
             email_sent_recently = False
 

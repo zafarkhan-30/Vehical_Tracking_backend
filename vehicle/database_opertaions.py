@@ -160,23 +160,28 @@ def create_master_device_details(device_id , data):
         gprs_time = datetime.datetime.fromtimestamp(gprs_time) if gprs_time else None
     except (ValueError, TypeError):
         gprs_time = None
-    try:
-        lat = float(alerts_details.get("latitude"))
-        long = float(alerts_details.get("longitude"))
-    except:
-        lat =  0
-        long = 0
 
-    device_location = Point(long, lat, srid=4326)
+    try:
+        device_lat = float(location_details.get("latitude"))
+    
+        device_long = float(location_details.get("longitude"))
+
+
+    except:
+        device_lat =  0
+        device_long = 0
+
+    device_location = Point(device_long, device_lat, srid=4326)
     canInfo_details = data.get("canInfo", {})
     alerts_details = data.get("alerts", {})
     try:
-        lat = float(alerts_details.get("latitude"))
-        long = float(alerts_details.get("longitude"))
+        alert_lat = float(alerts_details.get("latitude"))
+        alert_long = float(alerts_details.get("longitude"))
     except:
-        lat =  0
-        long = 0
-    alert_location = Point(long, lat, srid=4326)
+        alert_lat =  0
+        alert_long = 0
+
+    alert_location = Point(alert_long, alert_lat, srid=4326)
 
     todayDrive_details = data.get("todaysDrive", {})
     links_details = data.get("links", {})
