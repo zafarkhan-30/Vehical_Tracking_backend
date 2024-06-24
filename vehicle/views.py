@@ -417,28 +417,36 @@ class ViewAmnexDeviceDetails(APIView):
          
         return Response(data_list)
     
-
-
-
 class GetDeviceParametersDetails(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = deviceDetailsSerialiser
     queryset = devices.objects.all()
 
 
+def get_uber_devices_details_view():
+    try:
+        data_list = []
+        uber_devices = devices.objects.filter(name__icontains = "Uber")
+        for device in uber_devices:
+                device_details_serailizer = deviceDetailsSerialiser(device).data
+                today = date.today()
+                try:
+                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                    data_list_serializer = DataListSerializer(master_data_list).data
+                except:
+                    continue
 
-# class post_test_device(generics.GenericAPIView):
-#     serializer_class = post_test_deviceserialzier
-#     parser_classes = [MultiPartParser]
-#     def post(self, request):
-#         serializer = self.get_serializer(data = request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+                data_list.append({
+                    'device_details' : device_details_serailizer,
+                    'data' : data_list_serializer
+                })
+        return data_list
+    except:
+        return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
 
 
 
-from openpyxl import Workbook
+# from openpyxl import Workbook
 from django.http import HttpResponse
 
 
@@ -446,31 +454,5 @@ class Getdatafordate(generics.GenericAPIView):
     def get( self, request, id , date):
         master_data_list = MasterDeviceDetails.objects.filter(device = id , created_at__date = date)
         data_list_serializer = getDataListSerializer(master_data_list , many = True ).data
-
-
-        # Create an Excel workbook and add a worksheet
-        # wb = Workbook()
-        # ws = wb.active
-        # ws.title = "Data"
-
-        # # Add headers to the Excel file
-        # headers = list(data_list_serializer[0].keys()) if data_list_serializer else []
-        # ws.append(headers)
-
-        # # Add data rows to the Excel file
-        # for data in data_list_serializer:
-        #     row = []
-        #     for header in headers:
-        #         value = data.get(header, '')
-        #         # Convert GeoJsonDict or other non-serializable types to string
-        #         if isinstance(value, dict):
-        #             value = str(value)
-        #         row.append(value)
-        #     ws.append(row)
-
-        # # Save the Excel file to a BytesIO buffer
-        # response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        # response['Content-Disposition'] = f'attachment; filename="data_{id}_{date}.xlsx"'
-        # wb.save(response)
 
         return Response(data_list_serializer)

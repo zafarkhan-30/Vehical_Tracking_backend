@@ -6,28 +6,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import httpx
 from .utils import get_device_Data , refresh_access_token
 import asyncio
-
-class LocationConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        await self.channel_layer.group_add(
-            'location_group',
-            self.channel_name
-        )
-        await self.accept()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            'location_group',
-            self.channel_name
-        )
-
-    async def receive(self, text_data):
-        pass  # No need to handle incoming messages from clients
-
-    async def send_location_data(self, event):
-        data = event['data']
-        await self.send(text_data=json.dumps(data))
-
+from asgiref.sync import sync_to_async
+from .views import get_uber_devices_details_view
 
 
 
@@ -37,9 +17,6 @@ class GetDeviceData(AsyncWebsocketConsumer):
         await self.accept()
         await self.send(text_data=json.dumps({"message": "WebSocket connected"}))
         await self.fetch_data()
-        # await self.accept()
-        # await self.send(text_data=json.dumps({"message": "WebSocket connected"}))
-        # self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
         
 
     async def disconnect(self, close_code):
@@ -56,7 +33,7 @@ class GetDeviceData(AsyncWebsocketConsumer):
 
 
 
-class GetDevice_Data(AsyncWebsocketConsumer):
+class GetUberDevice_Data(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         await self.send(text_data=json.dumps({"message": "WebSocket connected"}))
@@ -68,17 +45,17 @@ class GetDevice_Data(AsyncWebsocketConsumer):
     async def fetch_data(self):
         async with httpx.AsyncClient() as client:
             try:
-                refresh_token = refresh_access_token()
-                response = get_device_Data(refresh_token)
-                # response = await client.get('https://timscan.transvolt.in/vehical/Get-AllMBMTDevice-Details/')
-                data = response.json()
-                await self.send(text_data=json.dumps(data))
+                response = await sync_to_async(get_uber_devices_details_view)()
+
+                # data = response.data
+                await self.send(text_data=json.dumps(response))
             except httpx.HTTPStatusError as e:
                 await self.send(text_data=json.dumps({"error": str(e)}))
             except Exception as e:
-                await self.send(text_data=json.dumps({"error": "An error occurred"}))
+                await self.send(text_data=json.dumps({"error": "An error occurred",
+                                                      'error_message': str(e)}))
 
     async def fetch_data_periodically(self):
         while True:
             await self.fetch_data()
-            await asyncio.sleep(60)  # Wait for 1 minute before fetching data again
+            await asyncio.sleep(10)  # Wait for 1 minute before fetching data again
