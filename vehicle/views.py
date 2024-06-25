@@ -20,6 +20,9 @@ from rest_framework.parsers import MultiPartParser
 from .permissions import *
 import os
 from VehicalTracking import settings
+from django.core.mail import send_mail
+
+
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [IsAuthenticated]
@@ -126,33 +129,40 @@ class PostMasterDeviceData(APIView):
             log_file = os.path.join(settings.BASE_DIR, "tmp/email_log.txt")
             print(log_file)
             now = datetime.datetime.now()
-            email_sent_recently = False
+            email_sent_today = False
 
             try:
                 # Check if the log file exists and is not empty
                 if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
                     with open(log_file, "r") as f:
-                        last_sent_time_str = f.read().strip()
-                        last_sent_time = datetime.datetime.fromisoformat(last_sent_time_str)
-                        time_diff = now - last_sent_time
-                        if time_diff.total_seconds() < 7200:  # 2 hours * 60 minutes * 60 seconds
-                            email_sent_recently = True
+                        last_sent_date_str = f.read().strip()
+                        last_sent_date = datetime.datetime.fromisoformat(last_sent_date_str).date()
+                        if last_sent_date == now.date():
+                            email_sent_today = True
             except (FileNotFoundError, ValueError):
                 pass
 
-            if not email_sent_recently:
+            if not email_sent_today:
                 subject = json.loads(response.content).get('error')
                 error_body = json.loads(response.content).get('error_description')
+                recipients = ['jafar.k@transvolt.in', 'sethi.rohan@mapmyindia.com' ,
+                              'deepak.c@transvolt.in' , 'avinash.j@ekamobility.com' ]
                 data = {
                     'subject': subject,
                     'body': error_body,
-                    'to_email': 'jafar.k@transvolt.in'
+                    'to_email': recipients
                 }
-                util.send_email(data)
-                
-                # Update the log file with the current timestamp
+                send_mail(
+                    subject,
+                    error_body,
+                    'jafarkhan3081999@gmail.com',  # From email
+                    recipients,
+                    fail_silently=False,
+                )
+
+                # Update the log file with the current date
                 with open(log_file, "w") as f:
-                    f.write(now.isoformat())
+                    f.write(now.date().isoformat())
 
             return Response(response.content, status=response.status_code)
  
@@ -450,9 +460,23 @@ def get_uber_devices_details_view():
 from django.http import HttpResponse
 
 
-class Getdatafordate(generics.GenericAPIView):
-    def get( self, request, id , date):
-        master_data_list = MasterDeviceDetails.objects.filter(device = id , created_at__date = date)
-        data_list_serializer = getDataListSerializer(master_data_list , many = True ).data
+class GettimeRangedateData(generics.GenericAPIView):
+    def get( self, request , device_name , start_date ,end_date ):
+        try:
+            data_list = []
+            uber_devices = devices.objects.filter(name = device_name)
+            for device in uber_devices:
+                    device_details_serailizer = deviceDetailsSerialiser(device).data
+                    try:
+                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__range=(start_date, end_date))
+                        data_list_serializer = DataListSerializer(master_data_list , many = True).data
+                    except:
+                        continue
 
-        return Response(data_list_serializer)
+                    data_list.append({
+                        'device_details' : device_details_serailizer,
+                        'data' : data_list_serializer
+                    })
+            return Response (data_list)
+        except:
+            return Response({'status': 'error' , 'message': 'No data available'} , status= 200)

@@ -15,7 +15,10 @@ import os
 import environ
 
 
+
 env = environ.Env()
+
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "VehicalTracking.settings")
 # reading .env file
 environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -61,7 +64,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_crontab',
     'rest_framework.authtoken',
-    # 'channels',
 ]
 
 MIDDLEWARE = [
@@ -114,12 +116,6 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 # DATABASES = {
 #     'default': {
