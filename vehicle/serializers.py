@@ -203,3 +203,20 @@ class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
         fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
                    "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
         geo_field='device_location'
+
+
+
+
+     
+class NoidaExtenToIncedointellectRouteSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = NoidaExtenToIncedointellectRoute
+        fields = ("name" ,)
+        geo_field = "geom"
+         
+
+class NoidaExtenToIncedointellectStopsSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = NoidaExtenToIncedointellectStops
+        fields = ("name" ,)
+        geo_field = "geom"

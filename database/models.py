@@ -118,10 +118,6 @@ class dinputs(models.Model):
     created_at = models.DateTimeField(auto_now=True)
 
 
-
-
-
-
 class MasterDeviceDetails(models.Model):
 
     device = models.ForeignKey(devices , related_name = "master_device_id" , on_delete = models.CASCADE, null = True)
@@ -196,3 +192,44 @@ class MasterDeviceDetails(models.Model):
                 self.latitude = Decimal(str(self.latitude).round(2))
                 self.longitude = Decimal(str(self.longitude).round(2))
                 super().save(*args, **kwargs)
+
+
+
+
+class NoidaExtenToIncedointellectRoute(models.Model):
+    gid = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=254, blank=True, null=True)
+    descriptio = models.CharField(max_length=254, blank=True, null=True)
+    timestamp = models.CharField(max_length=24, blank=True, null=True)
+    begin = models.CharField(max_length=24, blank=True, null=True)
+    end = models.CharField(max_length=24, blank=True, null=True)
+    altitudemo = models.CharField(max_length=254, blank=True, null=True)
+    tessellate = models.FloatField(blank=True, null=True)
+    extrude = models.FloatField(blank=True, null=True)
+    visibility = models.FloatField(blank=True, null=True)
+    draworder = models.FloatField(blank=True, null=True)
+    icon = models.CharField(max_length=254, blank=True, null=True)
+    geom = models.MultiLineStringField(dim=4, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'noida exten_to_incedointellect_route'
+
+
+
+class NoidaExtenToIncedointellectStops(models.Model):
+    gid = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=254, blank=True, null=True)
+    folderpath = models.CharField(max_length=254, blank=True, null=True)
+    symbolid = models.FloatField(blank=True, null=True)
+    altmode = models.IntegerField(blank=True, null=True)
+    base = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    snippet = models.CharField(max_length=254, blank=True, null=True)
+    popupinfo = models.CharField(max_length=254, blank=True, null=True)
+    haslabel = models.IntegerField(blank=True, null=True)
+    labelid = models.FloatField(blank=True, null=True)
+    geom = models.PointField(dim=4, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'noida exten_to_incedointellect_route_stops'

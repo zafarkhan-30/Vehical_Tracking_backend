@@ -13,6 +13,10 @@ urlpatterns = [
     path('Get-Device-parameters-Details/', GetDeviceParametersDetails.as_view(),  ),
     path('Get-Get-Device-data-Details/<str:device_name>/<str:start_date>/<str:end_date>/', GettimeRangedateData.as_view(),  ),
 
+
+    path('Get-NoidaExten-To-Incedointellect-Route', GetNoidaExtenToIncedointellectRouteView.as_view(),  ),
+    path('Get-NoidaExten-To-Incedointellect-Stops', GetNoidaExtenToIncedointellectStopsView.as_view(),  ),
+
     
 ]
             

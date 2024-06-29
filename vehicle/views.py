@@ -456,10 +456,6 @@ def get_uber_devices_details_view():
 
 
 
-# from openpyxl import Workbook
-from django.http import HttpResponse
-
-
 class GettimeRangedateData(generics.GenericAPIView):
     def get( self, request , device_name , start_date ,end_date ):
         try:
@@ -480,3 +476,31 @@ class GettimeRangedateData(generics.GenericAPIView):
             return Response (data_list)
         except:
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+
+
+
+class GetNoidaExtenToIncedointellectRouteView(generics.GenericAPIView):
+    serializer_class = NoidaExtenToIncedointellectRouteSerializer
+    def get( self, request):
+
+        route = NoidaExtenToIncedointellectRoute.objects.all()
+        data = self.get_serializer(route , many = True).data
+        return Response({'status': 'success',
+                            'message' : 'data was successfully fetched',
+                            'data': data},
+                            status= status.HTTP_200_OK)
+    
+
+
+class GetNoidaExtenToIncedointellectStopsView(generics.GenericAPIView):
+    serializer_class = NoidaExtenToIncedointellectStopsSerializer 
+    def get( self, request):
+
+        route = NoidaExtenToIncedointellectStops.objects.all()
+        data = self.get_serializer(route , many = True).data
+        return Response({'status': 'success',
+                            'message' : 'data was successfully fetched',
+                            'data': data},
+                            status= status.HTTP_200_OK)
+    
+

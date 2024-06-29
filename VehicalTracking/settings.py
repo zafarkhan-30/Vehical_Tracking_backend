@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'database',
     'vehicle',
+    'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
     'django_filters',
     'corsheaders',
@@ -137,7 +138,23 @@ DATABASES = {
         'HOST': env("PROD_DATABASE_HOST"),
         'PORT': env("PROD_DATABASE_PORT"),
     },
+    # 'mssql': {
+    #     'ENGINE': 'mssql',
+    #     'NAME': 'ITMS',
+    #     'USER': 'sa',
+    #     'PASSWORD': 'vtpl@123',
+    #     'HOST': '103.248.60.42',
+    #     'PORT': '1433',
+    #     'OPTIONS': {
+    #         'driver': 'ODBC Driver 17 for SQL Server',
+    #     },
+    # },
 }
+
+
+# settings.py
+
+# DATABASE_ROUTERS = ['schedulingMgmt.db_router.DatabaseRouter']
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
