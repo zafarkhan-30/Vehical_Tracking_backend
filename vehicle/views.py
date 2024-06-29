@@ -126,44 +126,44 @@ class PostMasterDeviceData(APIView):
 
             # Check if an email was sent today
             # log_file = "/tmp/email_log.txt"
-            log_file = os.path.join(settings.BASE_DIR, "tmp/email_log.txt")
-            print(log_file)
-            now = datetime.datetime.now()
-            email_sent_recently = False
+            # log_file = os.path.join(settings.BASE_DIR, "tmp/email_log.txt")
+            # print(log_file)
+            # now = datetime.datetime.now()
+            # email_sent_recently = False
 
-            try:
-                # Check if the log file exists and is not empty
-                if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
-                    with open(log_file, "r") as f:
-                        last_sent_time_str = f.read().strip()
-                        last_sent_time = datetime.datetime.fromisoformat(last_sent_time_str)
-                        time_diff = now - last_sent_time
-                        if time_diff.total_seconds() < 21600:  # 2 hours * 60 minutes * 60 seconds
-                            email_sent_recently = True
-            except (FileNotFoundError, ValueError):
-                pass
+            # try:
+            #     # Check if the log file exists and is not empty
+            #     if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
+            #         with open(log_file, "r") as f:
+            #             last_sent_time_str = f.read().strip()
+            #             last_sent_time = datetime.datetime.fromisoformat(last_sent_time_str)
+            #             time_diff = now - last_sent_time
+            #             if time_diff.total_seconds() < 21600:  # 2 hours * 60 minutes * 60 seconds
+            #                 email_sent_recently = True
+            # except (FileNotFoundError, ValueError):
+            #     pass
 
-            if not email_sent_recently:
-                subject = json.loads(response.content).get('error')
-                error_body = json.loads(response.content).get('error_description')
-                recipients = ['jafar.k@transvolt.in', 'sethi.rohan@mapmyindia.com' ,
-                              'deepak.c@transvolt.in' , 'avinash.j@ekamobility.com' ]
-                data = {
-                    'subject': subject,
-                    'body': error_body,
-                    'to_email': recipients
-                }
-                send_mail(
-                    subject,
-                    error_body,
-                    'jafarkhan3081999@gmail.com',  # From email
-                    recipients,
-                    fail_silently=False,
-                )
+            # if not email_sent_recently:
+            #     subject = json.loads(response.content).get('error')
+            #     error_body = json.loads(response.content).get('error_description')
+            #     recipients = ['jafar.k@transvolt.in', 'sethi.rohan@mapmyindia.com' ,
+            #                   'deepak.c@transvolt.in' , 'avinash.j@ekamobility.com' ]
+            #     data = {
+            #         'subject': subject,
+            #         'body': error_body,
+            #         'to_email': recipients
+            #     }
+            #     send_mail(
+            #         subject,
+            #         error_body,
+            #         'jafarkhan3081999@gmail.com',  # From email
+            #         recipients,
+            #         fail_silently=False,
+            #     )
 
-                # Update the log file with the current date
-                with open(log_file, "w") as f:
-                    f.write(now.date().isoformat())
+            #     # Update the log file with the current date
+            #     with open(log_file, "w") as f:
+            #         f.write(now.date().isoformat())
 
             return Response(response.content, status=response.status_code)
  
