@@ -129,20 +129,21 @@ class PostMasterDeviceData(APIView):
             log_file = os.path.join(settings.BASE_DIR, "tmp/email_log.txt")
             print(log_file)
             now = datetime.datetime.now()
-            email_sent_today = False
+            email_sent_recently = False
 
             try:
                 # Check if the log file exists and is not empty
                 if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
                     with open(log_file, "r") as f:
-                        last_sent_date_str = f.read().strip()
-                        last_sent_date = datetime.datetime.fromisoformat(last_sent_date_str).date()
-                        if last_sent_date == now.date():
-                            email_sent_today = True
+                        last_sent_time_str = f.read().strip()
+                        last_sent_time = datetime.datetime.fromisoformat(last_sent_time_str)
+                        time_diff = now - last_sent_time
+                        if time_diff.total_seconds() < 21600:  # 2 hours * 60 minutes * 60 seconds
+                            email_sent_recently = True
             except (FileNotFoundError, ValueError):
                 pass
 
-            if not email_sent_today:
+            if not email_sent_recently:
                 subject = json.loads(response.content).get('error')
                 error_body = json.loads(response.content).get('error_description')
                 recipients = ['jafar.k@transvolt.in', 'sethi.rohan@mapmyindia.com' ,
