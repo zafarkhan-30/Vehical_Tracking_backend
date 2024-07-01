@@ -50,3 +50,20 @@ class GetDashboardCountView(GenericAPIView):
                         where OPR_SchedulingDetailsTrip.IsLost=0''')
             
         
+        # routes
+                        
+        trip_count = cursor.fetchall()
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    "TotalTrips": trip_count[0][0]
+                }
+            }
+        )
+
+
+
+
+
+
