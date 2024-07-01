@@ -55,6 +55,10 @@ class LoginSerializer(serializers.Serializer):
 
 
 
+
+class logoutSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length = 255 , required =True)
+
 class deviceDetailsSerialiser(serializers.ModelSerializer):
     class Meta:
         model = devices

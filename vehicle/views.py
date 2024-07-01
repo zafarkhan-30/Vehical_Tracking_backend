@@ -25,7 +25,7 @@ from django.core.mail import send_mail
 
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser]    
 
     def post(self, request):
@@ -95,6 +95,22 @@ class LoginView(generics.GenericAPIView):
             # print(serializer.errors)
             return Response({'status': 'error',
                             'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class LogoutView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = logoutSerializer
+
+    def post(self, request):
+        try:
+            token = request.data.get('token')
+
+            token = Token.objects.get(key=token)
+            token.delete()
+            return Response({"message": "User logged out successfully"}, status=205)
+        except Token.DoesNotExist:
+            return Response({"message": "Invalid refresh token"}, status=400)
 
 
 class PostMasterDeviceData(APIView):
@@ -414,13 +430,6 @@ class ViewAmnexDeviceDetails(APIView):
                 data_list.append({
                     'device_details' : device_details_serailizer,
                     'data' : data_list_serializer
-                    # 'device_status': device_status_serializer,
-                    # 'device_location': device_location_serializer,
-                    # 'canInfo' : canInfo_serializer,
-                    # "alerts" : alerts_serializer , 
-                    # "todaysDrive" : todaysDrive_serializer,
-                    # "links" : links_serializer,
-                    # "dinputs" : dinputs_serializer
 
                 })
         else: 
@@ -477,7 +486,6 @@ class GettimeRangedateData(generics.GenericAPIView):
             return Response (data_list)
         except:
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
-
 
 
 class GetNoidaExtenToIncedointellectRouteView(generics.GenericAPIView):
