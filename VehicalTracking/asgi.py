@@ -14,6 +14,9 @@ from channels.auth import AuthMiddlewareStack
 from vehicle.routing import websocket_urlpatterns
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'VehicalTracking.settings')
 
+import django
+django.setup()
+
 asgi_application= get_asgi_application()
 application = ProtocolTypeRouter({
     "http": asgi_application,

@@ -5,9 +5,9 @@ urlpatterns = [
 
 
     # path('GetRoutelistView/', GetRoutelistView.as_view(),  ),
-    path('get-trip-count/', GetTripCountView.as_view(),  ),
-    path('get-distance-count/', GetDistanceKmView.as_view(),  ),
-    path('get-route-count/', routeCount.as_view(),  ),
+    path('get-dashboard-count/', GetdashboardCountView.as_view(),  ),
+    # path('get-distance-count/', GetDistanceKmView.as_view(),  ),
+    # path('get-route-count/', routeCount.as_view(),  ),
 
     
 ]
