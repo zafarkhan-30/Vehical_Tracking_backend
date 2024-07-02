@@ -6,6 +6,7 @@ urlpatterns = [
 
     # path('GetRoutelistView/', GetRoutelistView.as_view(),  ),
     path('get-dashboard-count/', GetDashboardCountView.as_view(),  ),
+    path('get-route-count/', routeCount.as_view(),  ),
 
     
 ]

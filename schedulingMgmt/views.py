@@ -31,7 +31,7 @@ class GetDashboardCountView(GenericAPIView):
         start_date = data.get('start_date')
         end_date = data.get('end_date')
 
-        if vehicalNumber and start_date:
+        if vehicalNumber and start_date and end_date:
             cursor.execute(f'''SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId ) as TotalTrips
                 FROM   MTN_BusInformation INNER JOIN
                 OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
@@ -49,8 +49,6 @@ class GetDashboardCountView(GenericAPIView):
                         OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
                         where OPR_SchedulingDetailsTrip.IsLost=0''')
             
-        
-        # routes
                         
         trip_count = cursor.fetchall()
         return Response(
@@ -61,6 +59,31 @@ class GetDashboardCountView(GenericAPIView):
                 }
             }
         )
+
+
+class routeCount(GenericAPIView):
+    serializer_class = None
+    def get(self , request):
+
+        connection = db_connection.get_connection()
+        cursor = connection.cursor()
+        cursor.execute('''
+                    SELECT COUNT(DISTINCT(Code)) FROM OPR_Route;
+                    ''')
+        
+        
+        route_count = cursor.fetchall()
+        print(route_count)
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    "route_count": route_count[0][0]
+                }
+            }
+        )
+
+        
 
 
 
