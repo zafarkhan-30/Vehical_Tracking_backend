@@ -12,15 +12,15 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
-import environ
+# import environ
 
 
 
-env = environ.Env()
+# env = environ.Env()
 
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "VehicalTracking.settings")
 # reading .env file
-environ.Env.read_env()
+# environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -35,8 +35,7 @@ if os.name == 'nt':
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
-
+SECRET_KEY = 'django-insecure-0(!s^e+q2$2!wx4hcx-nid#&hmy=vz#zkom3u9)&r3n%pni9s3'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -47,7 +46,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
+   
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -58,6 +57,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'database',
+     'daphne',
     'vehicle',
     'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
@@ -129,15 +129,31 @@ CHANNEL_LAYERS = {
 #     },
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("PROD_DATABASE_NAME"),
+#         'USER': env("PROD_DATABASE_USER"),
+#         'PASSWORD': env("PROD_DATABASE_PASSWORD"),
+#         'HOST': env("PROD_DATABASE_HOST"),
+#         'PORT': env("PROD_DATABASE_PORT"),
+#     },
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': env("PROD_DATABASE_NAME"),
-        'USER': env("PROD_DATABASE_USER"),
-        'PASSWORD': env("PROD_DATABASE_PASSWORD"),
-        'HOST': env("PROD_DATABASE_HOST"),
-        'PORT': env("PROD_DATABASE_PORT"),
+        'NAME': 'VehicalTracking',
+        'USER':'postgres',
+        'PASSWORD': 'PmAyaIhGmVVUtW22TNgh',
+        'HOST': 'vehicaltracking.c3isgu44krjo.ap-south-1.rds.amazonaws.com',
+        'PORT': '5432',
     },
+
+
+
+
+
     # 'mssql': {
     #     'ENGINE': 'mssql',
     #     'NAME': 'ITMS',

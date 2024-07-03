@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import generics 
 from rest_framework.response import Response
 import json
-from database.models import *
+
 from .database_opertaions import *
 import time
 from .utils import *
@@ -21,6 +21,7 @@ from .permissions import *
 import os
 from VehicalTracking import settings
 from django.core.mail import send_mail
+from database.models import *
 
 
 class UserRegister(generics.GenericAPIView):

@@ -3,7 +3,7 @@ import datetime
 from django.contrib.gis.db import models
 from django.db.utils import DataError
 from decimal import Decimal
-import pytz
+
 
 # Create your models here.
 
