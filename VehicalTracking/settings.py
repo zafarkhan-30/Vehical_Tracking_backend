@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'database',
-     
     'vehicle',
     'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
