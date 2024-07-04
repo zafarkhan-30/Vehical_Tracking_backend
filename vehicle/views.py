@@ -27,7 +27,7 @@ from database.models import *
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     # permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser]    
+    parser_classes = [MultiPartParser]      
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -76,23 +76,27 @@ class LoginView(generics.GenericAPIView):
             user = authenticate(username=username , password=password)
             if user is not None:
                 user1 = User.objects.filter(username=username)
-                serializer2 = RegisterSerializer(user1 ,many=True)
+                print(user.groups.first())
+                # serializer2 = RegisterSerializer(user1 ,many=True)
                 try:
                     token = Token.objects.create(user=user)
                 except:
                     token = Token.objects.get(user=user)
 
                 return Response({
+                    
                                 'Token':token.key,
+                                'status' : 'success' , 
+                                'message' : 'Login successful' ,
+                                'username': user.username,
+                                'group': str(user.groups.first()),
+                                
                                 } , 
                                 status=200)
             else:
-                
                 return Response({'status': 'error',
                                 'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
         else:
-            
-            
             # print(serializer.errors)
             return Response({'status': 'error',
                             'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
@@ -119,15 +123,10 @@ class PostMasterDeviceData(APIView):
     def get(self , request):
         refresh_token = refresh_access_token()
         response = get_device_Data(refresh_token)
-        # print(response)
-
+    
         if response.status_code == 200:
-
             devices_data = json.loads(response.content).get('data')
-            # print(devices_data)
-
             master_data_list = []
-
             for data in devices_data:
                 device_id = data.get("id")
 
@@ -140,47 +139,6 @@ class PostMasterDeviceData(APIView):
 
             return Response({"message": "device data created successfully"}, status=200)
         else:
-
-            # Check if an email was sent today
-            # log_file = "/tmp/email_log.txt"
-            # log_file = os.path.join(settings.BASE_DIR, "tmp/email_log.txt")
-            # print(log_file)
-            # now = datetime.datetime.now()
-            # email_sent_recently = False
-
-            # try:
-            #     # Check if the log file exists and is not empty
-            #     if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
-            #         with open(log_file, "r") as f:
-            #             last_sent_time_str = f.read().strip()
-            #             last_sent_time = datetime.datetime.fromisoformat(last_sent_time_str)
-            #             time_diff = now - last_sent_time
-            #             if time_diff.total_seconds() < 21600:  # 2 hours * 60 minutes * 60 seconds
-            #                 email_sent_recently = True
-            # except (FileNotFoundError, ValueError):
-            #     pass
-
-            # if not email_sent_recently:
-            #     subject = json.loads(response.content).get('error')
-            #     error_body = json.loads(response.content).get('error_description')
-            #     recipients = ['jafar.k@transvolt.in', 'sethi.rohan@mapmyindia.com' ,
-            #                   'deepak.c@transvolt.in' , 'avinash.j@ekamobility.com' ]
-            #     data = {
-            #         'subject': subject,
-            #         'body': error_body,
-            #         'to_email': recipients
-            #     }
-            #     send_mail(
-            #         subject,
-            #         error_body,
-            #         'jafarkhan3081999@gmail.com',  # From email
-            #         recipients,
-            #         fail_silently=False,
-            #     )
-
-            #     # Update the log file with the current date
-            #     with open(log_file, "w") as f:
-            #         f.write(now.date().isoformat())
 
             return Response(response.content, status=response.status_code)
  
@@ -448,6 +406,30 @@ def get_uber_devices_details_view():
     try:
         data_list = []
         uber_devices = devices.objects.filter(name__icontains = "Uber")
+        # uber_devices = devices.objects.filter(name__icontains = "MBMT-15")
+        for device in uber_devices:
+                device_details_serailizer = deviceDetailsSerialiser(device).data
+                today = date.today()
+                try:
+                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                    data_list_serializer = DataListSerializer(master_data_list).data
+                except:
+                    continue
+
+                data_list.append({
+                    'device_details' : device_details_serailizer,
+                    'data' : data_list_serializer
+                })
+        return data_list
+    except:
+        return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+    
+
+def get_MBMT_device_details_view():
+    try:
+        data_list = []
+        # uber_devices = devices.objects.filter(name__icontains = "Uber")
+        uber_devices = devices.objects.filter(name__icontains = "MBMT")
         for device in uber_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()

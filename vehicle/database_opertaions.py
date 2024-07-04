@@ -246,8 +246,5 @@ def create_master_device_details(device_id , data):
         input_6 =dinputs_details.get("6"),
         input_7 =dinputs_details.get("7"),
 
-
-
-
     )
 
