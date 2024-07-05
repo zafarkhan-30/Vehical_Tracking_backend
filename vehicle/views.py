@@ -103,6 +103,9 @@ class LoginView(generics.GenericAPIView):
 
 
 
+
+
+
 class LogoutView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = logoutSerializer
@@ -116,6 +119,10 @@ class LogoutView(generics.GenericAPIView):
             return Response({"message": "User logged out successfully"}, status=205)
         except Token.DoesNotExist:
             return Response({"message": "Invalid refresh token"}, status=400)
+
+
+
+
 
 
 class PostMasterDeviceData(APIView):
@@ -402,12 +409,17 @@ class GetDeviceParametersDetails(generics.ListAPIView):
     queryset = devices.objects.all()
 
 
-def get_uber_devices_details_view():
+def get_uber_devices_details_view(query_params=None):
     try:
         data_list = []
-        uber_devices = devices.objects.filter(name__icontains = "Uber")
-        # uber_devices = devices.objects.filter(name__icontains = "MBMT-15")
-        for device in uber_devices:
+        print(query_params)
+        if query_params:
+            name = query_params.get('name')
+            devices_list = devices.objects.filter(name__icontains=name)
+        else:
+            devices_list = devices.objects.filter(name__icontains="Uber")
+
+        for device in devices_list:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
                 try:
@@ -421,8 +433,9 @@ def get_uber_devices_details_view():
                     'data' : data_list_serializer
                 })
         return data_list
-    except:
-        return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+    except Exception as e:
+        return Response({'status': 'error' ,
+                          'message': str(e)} , status= 200)
     
 
 def get_MBMT_device_details_view(query_params=None):

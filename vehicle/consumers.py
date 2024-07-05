@@ -43,25 +43,31 @@ class GetUberDevice_Data(AsyncWebsocketConsumer):
         async def disconnect(self, close_code):
             self.fetch_data_task.cancel()
 
+        
+        async def receive(self, text_data):
+            data = json.loads(text_data)
+            self.query_params = data.get('query_params', {})
+            await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
+
         async def fetch_data(self):
-            user = self.scope.user
-            print(user)
             async with httpx.AsyncClient() as client:
                 try:
-                    response = await sync_to_async(get_uber_devices_details_view)()
+                    if self.query_params:
+                        response = await sync_to_async(get_uber_devices_details_view)(self.query_params)
+                    else:
+                        response = await sync_to_async(get_uber_devices_details_view)()
 
-                    # data = response.data
                     await self.send(text_data=json.dumps(response))
                 except httpx.HTTPStatusError as e:
                     await self.send(text_data=json.dumps({"error": str(e)}))
                 except Exception as e:
                     await self.send(text_data=json.dumps({"error": "An error occurred",
-                                                        'error_message': str(e)}))
+                                                          'error_message': str(e)}))
 
         async def fetch_data_periodically(self):
             while True:
                 await self.fetch_data()
-                await asyncio.sleep(60)  # Wait for 1 minute before fetching data again
+                await asyncio.sleep(10)  # Wait for 1 minute before fetching data again
 
 
 
@@ -99,4 +105,4 @@ class GetMBMTDevice_Data(AsyncWebsocketConsumer):
     async def fetch_data_periodically(self):
         while True:
             await self.fetch_data()
-            await asyncio.sleep(60)  # Wait for 1 minute before fetching data again
+            await asyncio.sleep(10)  # Wait for 1 minute before fetching data again
