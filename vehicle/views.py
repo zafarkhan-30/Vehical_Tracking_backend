@@ -425,27 +425,33 @@ def get_uber_devices_details_view():
         return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
     
 
-def get_MBMT_device_details_view():
+def get_MBMT_device_details_view(query_params=None):
     try:
         data_list = []
-        # uber_devices = devices.objects.filter(name__icontains = "Uber")
-        uber_devices = devices.objects.filter(name__icontains = "MBMT")
-        for device in uber_devices:
-                device_details_serailizer = deviceDetailsSerialiser(device).data
-                today = date.today()
-                try:
-                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    data_list_serializer = DataListSerializer(master_data_list).data
-                except:
-                    continue
 
-                data_list.append({
-                    'device_details' : device_details_serailizer,
-                    'data' : data_list_serializer
-                })
+        if query_params:
+            name = query_params.get('name')
+            devices_list = devices.objects.filter(name__icontains=name)
+        else:
+            devices_list = devices.objects.filter(name__icontains="MBMT")
+
+        for device in devices_list:
+            device_details_serailizer = deviceDetailsSerialiser(device).data
+            today = date.today()
+            try:
+                master_data_list = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
+                data_list_serializer = DataListSerializer(master_data_list).data
+            except MasterDeviceDetails.DoesNotExist:
+                data_list_serializer = None
+
+            data_list.append({
+                'device_details': device_details_serailizer,
+                'data': data_list_serializer
+            })
+
         return data_list
-    except:
-        return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
 
 
 
@@ -496,3 +502,27 @@ class GetNoidaExtenToIncedointellectStopsView(generics.GenericAPIView):
                             status= status.HTTP_200_OK)
     
 
+
+class GetRouteNo15BusStopsView(generics.GenericAPIView):
+    serializer_class = GetRouteNo15BusStopsSerializer 
+    def get( self, request):
+
+        route = RouteNo15BusStops.objects.all()
+        data = self.get_serializer(route , many = True).data
+        return Response({'status': 'success',
+                            'message' : 'data was successfully fetched',
+                            'data': data},
+                            status= status.HTTP_200_OK)
+    
+
+
+class GetRouteNo15View(generics.GenericAPIView):
+    serializer_class = GetRoute15Serializer 
+    def get( self, request):
+
+        route = RouteNo15.objects.all()
+        data = self.get_serializer(route , many = True).data
+        return Response({'status': 'success',
+                            'message' : 'data was successfully fetched',
+                            'data': data},
+                            status= status.HTTP_200_OK)

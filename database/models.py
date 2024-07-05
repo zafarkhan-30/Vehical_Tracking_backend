@@ -233,3 +233,28 @@ class NoidaExtenToIncedointellectStops(models.Model):
     class Meta:
         managed = False
         db_table = 'noida exten_to_incedointellect_route_stops'
+
+
+
+
+
+class RouteNo15(models.Model):
+    gid = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=254, blank=True, null=True)
+    geom = models.MultiLineStringField(dim=4, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'route no_15'
+
+
+
+
+class RouteNo15BusStops(models.Model):
+    gid = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=254, blank=True, null=True)
+    geom = models.PointField(dim=4, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'route no_15_bus stops'

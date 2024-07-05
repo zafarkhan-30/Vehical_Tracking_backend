@@ -224,3 +224,20 @@ class NoidaExtenToIncedointellectStopsSerializer(GeoFeatureModelSerializer):
         model = NoidaExtenToIncedointellectStops
         fields = ("name" ,)
         geo_field = "geom"
+
+
+
+
+class GetRouteNo15BusStopsSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = RouteNo15BusStops
+        fields = ("name" ,)
+        geo_field = "geom"
+
+
+
+class GetRoute15Serializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = RouteNo15
+        fields = ("name" ,)
+        geo_field = "geom"
