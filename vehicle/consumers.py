@@ -34,59 +34,75 @@ class GetDeviceData(AsyncWebsocketConsumer):
 
 
 class GetUberDevice_Data(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.query_params = None
 
-        async def connect(self):
-            await self.accept()
-            await self.send(text_data=json.dumps({"message": "WebSocket connected"}))
-            self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
-
-        async def disconnect(self, close_code):
-            self.fetch_data_task.cancel()
-
-        
-        async def receive(self, text_data):
-            data = json.loads(text_data)
-            self.query_params = data.get('query_params', {})
-            await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
-
-        async def fetch_data(self):
-            async with httpx.AsyncClient() as client:
-                try:
-                    if self.query_params:
-                        response = await sync_to_async(get_uber_devices_details_view)(self.query_params)
-                    else:
-                        response = await sync_to_async(get_uber_devices_details_view)()
-
-                    await self.send(text_data=json.dumps(response))
-                except httpx.HTTPStatusError as e:
-                    await self.send(text_data=json.dumps({"error": str(e)}))
-                except Exception as e:
-                    await self.send(text_data=json.dumps({"error": "An error occurred",
-                                                          'error_message': str(e)}))
-
-        async def fetch_data_periodically(self):
-            while True:
-                await self.fetch_data()
-                await asyncio.sleep(10)  # Wait for 1 minute before fetching data again
-
-
-
-
-
-class GetMBMTDevice_Data(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         await self.send(text_data=json.dumps({"message": "WebSocket connected"}))
-        self.query_params = None
-        self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
 
     async def disconnect(self, close_code):
-        self.fetch_data_task.cancel()
+        if hasattr(self, 'fetch_data_task'):
+            self.fetch_data_task.cancel()
 
     async def receive(self, text_data):
         data = json.loads(text_data)
         self.query_params = data.get('query_params', {})
         await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
+
+        # Start fetching data periodically after receiving the first query_params
+        if not hasattr(self, 'fetch_data_task'):
+            self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
+
+    async def fetch_data(self):
+        async with httpx.AsyncClient() as client:
+            try:
+                if self.query_params:
+                    response = await sync_to_async(get_uber_devices_details_view)(self.query_params)
+                else:
+                    response = await sync_to_async(get_uber_devices_details_view)()
+
+                await self.send(text_data=json.dumps(response))
+            except httpx.HTTPStatusError as e:
+                await self.send(text_data=json.dumps({"error": str(e)}))
+            except Exception as e:
+                await self.send(text_data=json.dumps({"error": "An error occurred",
+                                                      'error_message': str(e)}))
+
+    async def fetch_data_periodically(self):
+        while True:
+            await self.fetch_data()
+            await asyncio.sleep(10)  # Wait for 10 seconds before fetching data again
+
+
+
+
+class GetMBMTDevice_Data(AsyncWebsocketConsumer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.query_params = None
+
+
+    async def connect(self):
+        await self.accept()
+        await self.send(text_data=json.dumps({"message": "WebSocket connected"}))
+        # self.query_params = None
+        # self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'fetch_data_task'):
+            self.fetch_data_task.cancel()
+        
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        self.query_params = data.get('query_params', {})
+        await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
+
+        if not hasattr(self, 'fetch_data_task'):
+            self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
 
     async def fetch_data(self):
         async with httpx.AsyncClient() as client:
