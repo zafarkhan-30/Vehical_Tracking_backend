@@ -16,6 +16,41 @@ connection = db_connection.get_connection()
 cursor = connection.cursor()
 
 
+
+def Get_Buses_List(scheduling_date , route_id):
+
+    cursor.execute(f'''
+                    SELECT o.RouteId as RouteId, osd.BusInformationId as BusInformationId , os.SchedulingDate as SchedulingDate , osd.BusCode as BusCode , o.Code as ScheduleCode
+                    FROM OPR_Scheduling os
+                    JOIN OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                    JOIN OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                    WHERE os.SchedulingDate = '{scheduling_date}'  AND o.RouteId = {route_id} ;
+                    ''')
+     
+    result = cursor.fetchall()
+    buses_list = [{'RouteId': row.RouteId , 'BusInformationId' : row.BusInformationId , 
+                   'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
+    
+    return buses_list
+
+
+
+
+
+def get_route_list(user_group):
+    if user_group == 'MBMT':
+            company_id = 1
+    elif user_group == 'Uber':
+        company_id = 2
+
+    cursor.execute(f'''
+                    SELECT RouteId ,Name , Code FROM OPR_Route WHERE CompanyId = '{company_id}';
+                    ''')
+    result = cursor.fetchall()
+    route_list = [{'route_id': row.RouteId , 'Name': row.Name , 'Code': row.Code} for row in result]
+    return route_list
+
+
 def get_MBMT_busses_list():
     cursor.execute('''
                     SELECT BusCode, VehicleNumber, ChasisNumber
@@ -103,7 +138,7 @@ def Get_Trip_Count(vehicalNumber , start_date , end_date , user_group):
                     OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
                     OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId INNER JOIN
                     OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-                    where OPR_SchedulingDetailsTrip.IsLost=0 and MTN_BusInformation.CompanyId = {company_id} ''')
+                    where OPR_SchedulingDetailsTrip.IsLost=0 and MTN_BusInformation.CompanyId = {company_id}''')
         
     
     trip_count = trip.fetchall()

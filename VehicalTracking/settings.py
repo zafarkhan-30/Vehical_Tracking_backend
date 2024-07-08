@@ -12,15 +12,15 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
-# import environ
+import environ
 
 
 
-# env = environ.Env()
+env = environ.Env()
 
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "VehicalTracking.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "VehicalTracking.settings")
 # reading .env file
-# environ.Env.read_env()
+environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -79,12 +79,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'VehicalTracking.urls'
 CORS_ALLOW_ALL_ORIGINS = True 
-CORS_ALLOWED_ORIGINS = [
-    "https://example.com",
-    "https://sub.example.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:9000",
-]
+
 
 TEMPLATES = [
     {
@@ -113,31 +108,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-#         'NAME': env("LOCAL_DATABASE_NAME"),
-#         'USER': env("LOCAL_DATABASE_USER"),
-#         'PASSWORD': env("LOCAL_DATABASE_PASSWORD"),
-#         'HOST': env("LOCAL_DATABASE_HOST"),
-#         'PORT': env("PROD_DATABASE_PORT"),
-#     },
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-#         'NAME': env("PROD_DATABASE_NAME"),
-#         'USER': env("PROD_DATABASE_USER"),
-#         'PASSWORD': env("PROD_DATABASE_PASSWORD"),
-#         'HOST': env("PROD_DATABASE_HOST"),
-#         'PORT': env("PROD_DATABASE_PORT"),
-#     },
-
 
 DATABASES = {
     'default': {
@@ -149,27 +119,9 @@ DATABASES = {
         'PORT': '5432',
     },
 
-
-
-
-
-    # 'mssql': {
-    #     'ENGINE': 'mssql',
-    #     'NAME': 'ITMS',
-    #     'USER': 'sa',
-    #     'PASSWORD': 'vtpl@123',
-    #     'HOST': '103.248.60.42',
-    #     'PORT': '1433',
-    #     'OPTIONS': {
-    #         'driver': 'ODBC Driver 17 for SQL Server',
-    #     },
-    # },
 }
 
 
-# settings.py
-
-# DATABASE_ROUTERS = ['schedulingMgmt.db_router.DatabaseRouter']
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -177,6 +129,15 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',  
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '1500/day',  # Adjust the rate limits as needed
+        'anon': '1500/day',
+    }
+
 
 }
 SWAGGER_SETTINGS = {

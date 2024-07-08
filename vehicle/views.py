@@ -22,6 +22,7 @@ import os
 from VehicalTracking import settings
 from django.core.mail import send_mail
 from database.models import *
+from rest_framework.throttling import UserRateThrottle , AnonRateThrottle
 
 
 class UserRegister(generics.GenericAPIView):
@@ -121,10 +122,6 @@ class LogoutView(generics.GenericAPIView):
             return Response({"message": "Invalid refresh token"}, status=400)
 
 
-
-
-
-
 class PostMasterDeviceData(APIView):
 
     def get(self , request):
@@ -212,6 +209,7 @@ class PostDeviceDetailsView(APIView):
         
 class ViewDeviceAllDetails(APIView):
     permission_classes = [IsAuthenticated , IsAchargeZone  | IsBattery_IQ | IsAmnex ]
+    throttle_classes = [UserRateThrottle , AnonRateThrottle]
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -285,6 +283,7 @@ class ViewDeviceAllDetails(APIView):
              
 class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
     # permission_classes = [IsAuthenticatedOrReadOnly , IsMBMT | IsAmnex ]
+    throttle_classes = [AnonRateThrottle]
 
     # throttle_classes = [AnonRateThrottle]
     """
@@ -350,7 +349,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
     
 class ViewAmnexDeviceDetails(APIView):
     permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
-
+    throttle_classes = [UserRateThrottle , AnonRateThrottle]
     def get_queryset(self):
         
         # name = self.request.query_params.get('name')
@@ -409,29 +408,26 @@ class GetDeviceParametersDetails(generics.ListAPIView):
     queryset = devices.objects.all()
 
 
-def get_uber_devices_details_view(query_params=None):
+def get_devices_details_view(query_params=None):
     try:
         data_list = []
-        print(query_params)
         if query_params:
             name = query_params.get('name')
             devices_list = devices.objects.filter(name__icontains=name)
-        else:
-            devices_list = devices.objects.filter(name__icontains="Uber")
 
         for device in devices_list:
-                device_details_serailizer = deviceDetailsSerialiser(device).data
-                today = date.today()
-                try:
-                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
-                    data_list_serializer = DataListSerializer(master_data_list).data
-                except:
-                    continue
+            device_details_serailizer = deviceDetailsSerialiser(device).data
+            today = date.today()
+            try:
+                master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                data_list_serializer = DataListSerializer(master_data_list).data
+            except:
+                continue
 
-                data_list.append({
-                    'device_details' : device_details_serailizer,
-                    'data' : data_list_serializer
-                })
+            data_list.append({
+                'device_details' : device_details_serailizer,
+                'data' : data_list_serializer
+            })
         return data_list
     except Exception as e:
         return Response({'status': 'error' ,
@@ -465,7 +461,6 @@ def get_MBMT_device_details_view(query_params=None):
         return data_list
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
-
 
 
 class GettimeRangedateData(generics.GenericAPIView):
@@ -515,7 +510,6 @@ class GetNoidaExtenToIncedointellectStopsView(generics.GenericAPIView):
                             status= status.HTTP_200_OK)
     
 
-
 class GetRouteNo15BusStopsView(generics.GenericAPIView):
     serializer_class = GetRouteNo15BusStopsSerializer 
     def get( self, request):
@@ -528,7 +522,6 @@ class GetRouteNo15BusStopsView(generics.GenericAPIView):
                             status= status.HTTP_200_OK)
     
 
-
 class GetRouteNo15View(generics.GenericAPIView):
     serializer_class = GetRoute15Serializer 
     def get( self, request):
@@ -539,3 +532,4 @@ class GetRouteNo15View(generics.GenericAPIView):
                             'message' : 'data was successfully fetched',
                             'data': data},
                             status= status.HTTP_200_OK)
+
