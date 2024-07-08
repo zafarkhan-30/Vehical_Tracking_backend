@@ -1,6 +1,5 @@
 from django.urls import path
-from .consumers import GetDeviceData , GetDevice_Data , GetMBMTDevice_Data
-
+from .consumers import GetDeviceData , GetDevice_Data
 websocket_urlpatterns = [
     
     path('ws/device-data/', GetDeviceData.as_asgi()),
