@@ -42,3 +42,7 @@ class Command(BaseCommand):
                 f.write("Device details successfully updated.\n")
             else:
                 f.write(f"Failed to update device details. Status code: {response.status_code}\n")
+
+
+# a = Command
+# print(a.handle())
