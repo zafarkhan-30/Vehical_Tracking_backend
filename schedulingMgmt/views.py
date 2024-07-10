@@ -92,6 +92,7 @@ class GetdashboardCountView(GenericAPIView):
         distance = Get_Distance_Km(vehicalNumber,start_date,end_date , user_groups)
         route_count = Get_route_count(user_groups)
         buses_count = Get_Buses_count(user_groups)
+        Charger_count = Get_Charger_count(user_groups)
 
         return Response(
             {
@@ -101,7 +102,8 @@ class GetdashboardCountView(GenericAPIView):
                     "Bus_count" : buses_count,
                     "TotalTrips": trip_count,
                     "DistanceBytrip_in_Km": distance,
-                    # "DistanceByodometer_in_Km":round(distance_count[0][1])
+                    "Chargers": Charger_count,
+
                 }
             }
         )

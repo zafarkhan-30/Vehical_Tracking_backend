@@ -33,7 +33,20 @@ def Get_Buses_List(scheduling_date , route_id):
     
     return buses_list
 
+def Get_Charger_count(user_group):
+    if user_group == 'MBMT':
+            company_id = 1
+    elif user_group == 'Uber':
+        company_id = 2
 
+    cursor.execute(f'''
+                    SELECT COUNT(*) as ChargerCount
+                    FROM MTN_ChargerMaster
+                    WHERE CompanyId = '{company_id}';
+                    ''')
+    
+    charger_count = cursor.fetchall()
+    return charger_count[0][0]
 
 
 
