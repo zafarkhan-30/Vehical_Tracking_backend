@@ -10,11 +10,6 @@ def run_device_details_view():
     headers = {"Content-Type": "application/json"}
     log_file = "/tmp/cron_job_output.log"
 
-    view = PostMasterDeviceData()
-    get = view.get()
-    
-
-
     try:
         response = requests.get(url, headers=headers , verify=False)
         with open(log_file, "a") as f:
