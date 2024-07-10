@@ -224,14 +224,14 @@ MEDIA_URL = "/media/"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CRONJOBS = [
-    ('* * * * *', 'vehicle.cron_job.Command.handle'),
-  
-]
 # CRONJOBS = [
-#     ('* * * * *', 'vehicle.cron_job.run_device_details_view'),
+#     ('* * * * *', 'vehicle.cron_job.Command.handle'),
   
 # ]
+CRONJOBS = [
+    ('* * * * *', 'vehicle.cron_job.run_device_details_view'),
+  
+]
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
