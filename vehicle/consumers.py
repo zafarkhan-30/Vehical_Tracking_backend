@@ -49,7 +49,7 @@ class GetDevice_Data(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         self.query_params = data.get('query_params', {})
-        await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
+        # await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
 
         # Start fetching data periodically after receiving the first query_params
         if not hasattr(self, 'fetch_data_task'):

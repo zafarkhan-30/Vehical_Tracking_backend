@@ -5,8 +5,4 @@ from .models import *
 
 
 admin.site.register(devices)
-admin.site.register(deviceLocation)
-
-admin.site.register(canInfo)
-admin.site.register(alerts)
-admin.site.register(deviceStatus)
+admin.site.register(MasterDeviceDetails)

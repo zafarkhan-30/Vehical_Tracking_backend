@@ -129,82 +129,25 @@ class PostMasterDeviceData(APIView):
         response = get_device_Data(refresh_token)
     
         if response.status_code == 200:
-            devices_data = json.loads(response.content).get('data')
-            master_data_list = []
-            for data in devices_data:
-                device_id = data.get("id")
+            try:
+                devices_data = json.loads(response.content).get('data')
+                master_data_list = []
+                for data in devices_data:
+                    device_id = data.get("id")
+                    device_instances = devices.objects.filter(device_id=device_id).first()
+                    if device_instances:
+                        master_data_list.append(create_master_device_details(device_instances , data))
+                    
+                master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
 
-                if "deviceDetails" in data:
-                    create_device_object(data)
-                
-                master_data_list.append(create_master_device_details(device_id , data))
-                
-            master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
-
-            return Response({"message": "device data created successfully"}, status=200)
+                return Response({"message": "device data created successfully"}, status=200)
+            except Exception as e:
+                return Response({"message": str(e)})
         else:
-
             return Response(response.content, status=response.status_code)
  
 
-class PostDeviceDetailsView(APIView):
 
-    def get(self, request):
-        refresh_token = refresh_access_token()
-        response = get_device_Data(refresh_token)
-        print(str(uuid.uuid4()))
-        
-        if response.status_code == 200:
-
-            devices_data = json.loads(response.content).get('data')
-            
-            device_locations = []
-            deviceStatus_details = []
-            canInfo_details = []
-            alerts_details = []
-            todaysDrive_details = []
-            links_details = []
-            dinputs_details = []
-
-            for data in devices_data:
-                transactionId = str(uuid.uuid4())
-                device_id = data.get("id")
-
-
-                if "deviceDetails" in data:
-                    create_device_object(data)
-                try:
-                    if "active" in data and "status" in data:
-                        deviceStatus_details.append(create_device_status(device_id, data, transactionId))
-                    else:
-                        deviceStatus_details.append(create_device_status(device_id, data, transactionId))
-                except:
-                    pass
-                if "location" in data:
-                    device_locations.append(create_device_location(device_id, data , transactionId))
-                if "canInfo" in data:
-                    canInfo_details.append(create_canInfo_object(device_id, data, transactionId))
-                if "alerts" in data:
-                    alerts_details.append(create_alerts_object(device_id, data, transactionId))
-                if "todaysDrive" in data:
-                    todaysDrive_details.append(create_todaysDrive_object(device_id, data, transactionId))
-                if "links" in data:
-                    links_details.append(create_links_object(device_id, data, transactionId))
-                if "dinputs" in data:
-                    dinputs_details.append(create_dinputs_objects(device_id, data, transactionId))
-
-            location_object = deviceLocation.objects.bulk_create(device_locations)
-            deviceStatus_object = deviceStatus.objects.bulk_create(deviceStatus_details)
-            canInfo_object = canInfo.objects.bulk_create(canInfo_details)
-            alerts_object = alerts.objects.bulk_create(alerts_details)
-            todaysDrive_object = todaysDrive.objects.bulk_create(todaysDrive_details)
-            links_object = links.objects.bulk_create(links_details)
-            dinputs_object = dinputs.objects.bulk_create(dinputs_details)
-
-            return Response({"message": "device data created successfully"}, status=200)
-
-        else:
-            return Response(response.content, status=response.status_code)
         
         
 class ViewDeviceAllDetails(APIView):
