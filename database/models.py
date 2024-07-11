@@ -31,8 +31,6 @@ class MasterDeviceDetails(models.Model):
 
     gpsTime = models.DateTimeField( null = True )
     gprsTime = models.DateTimeField(null= True )
-    # latitude = models.DecimalField(max_digits=20, decimal_places=18)
-    # longitude = models.DecimalField(max_digits=20, decimal_places=18)
     device_location = models.PointField(null= True , blank= True)
     altitude = models.IntegerField(null = True)
     heading = models.IntegerField(null = True)

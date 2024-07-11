@@ -1,6 +1,8 @@
 
 from .db_connection import  DatabaseConnection
-
+from database.models import MasterDeviceDetails
+from .serializers import *
+from datetime import  date
 
 db_config = {
             'server': '103.248.60.42',
@@ -12,199 +14,185 @@ db_config = {
 
 
 db_connection  = DatabaseConnection(**db_config)
-connection = db_connection.get_connection()
-cursor = connection.cursor()
+
+def get_db_cursor():
+    try:
+        connection = db_connection.get_connection()
+        return connection.cursor()
+    except Exception as e:
+        raise ConnectionError(f"An error occurred: {str(e)}")
 
 
+class ITMS:
+    def __init__(self, cursor, user_group):
+        """
+            Initialize an instance of ITMS class.
+            Parameters:
+            cursor (object): A database cursor object to execute SQL queries.
+            user_group (str): The user group for which the ITMS instance is being created.
+            Returns:
+            None
+        """
+        self.cursor = cursor
+        self.company_id = self.get_company_id(user_group)
 
-def Get_Buses_List(scheduling_date , route_id):
+    def get_company_id(self, user_group):
+        if user_group == 'MBMT':
+            return 1
+        elif user_group == 'Uber':
+            return 2
+        return None
 
-    cursor.execute(f'''
-                    SELECT o.RouteId as RouteId, osd.BusInformationId as BusInformationId , os.SchedulingDate as SchedulingDate , osd.BusCode as BusCode , o.Code as ScheduleCode
-                    FROM OPR_Scheduling os
-                    JOIN OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-                    JOIN OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-                    WHERE os.SchedulingDate = '{scheduling_date}'  AND o.RouteId = {route_id} ;
-                    ''')
-     
-    result = cursor.fetchall()
-    buses_list = [{'RouteId': row.RouteId , 'BusInformationId' : row.BusInformationId , 
-                   'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
-    
-    return buses_list
+    def get_route_list(self):
+        self.cursor.execute(f'''
+            SELECT RouteId, Name, Code 
+            FROM OPR_Route 
+            WHERE CompanyId = '{self.company_id}';
+        ''')
+        result = self.cursor.fetchall()
+        return [{'route_id': row.RouteId, 'Name': row.Name, 'Code': row.Code} for row in result]
 
-def Get_Charger_count(user_group):
-    if user_group == 'MBMT':
-            company_id = 1
-    elif user_group == 'Uber':
-        company_id = 2
+    def get_route_count(self):
+        self.cursor.execute(f'''
+            SELECT COUNT(DISTINCT Code) 
+            FROM OPR_Route 
+            WHERE CompanyId = '{self.company_id}';
+        ''')
+        return self.cursor.fetchone()[0]
 
-    cursor.execute(f'''
-                    SELECT COUNT(*) as ChargerCount
-                    FROM MTN_ChargerMaster
-                    WHERE CompanyId = '{company_id}';
-                    ''')
-    
-    charger_count = cursor.fetchall()
-    return charger_count[0][0]
-
-
-
-def get_route_list(user_group):
-    if user_group == 'MBMT':
-            company_id = 1
-    elif user_group == 'Uber':
-        company_id = 2
-
-    cursor.execute(f'''
-                    SELECT RouteId ,Name , Code FROM OPR_Route WHERE CompanyId = '{company_id}';
-                    ''')
-    result = cursor.fetchall()
-    route_list = [{'route_id': row.RouteId , 'Name': row.Name , 'Code': row.Code} for row in result]
-    return route_list
-
-
-def get_MBMT_busses_list():
-    cursor.execute('''
-                    SELECT BusCode, VehicleNumber, ChasisNumber
-                    FROM MTN_BusInformation
-                    WHERE CompanyId=1;
-                    ''')
-        
-    MBMT_busses_list = cursor.fetchall()
-    
-    buses_list = [{'BusCode': row.BusCode, 'VehicleNumber': row.VehicleNumber, 
-                   'ChasisNumber': row.ChasisNumber} for row in MBMT_busses_list]
-    return buses_list 
-
-
-def get_Uber_busses_list():
-    cursor.execute('''
-                    SELECT BusCode, VehicleNumber, ChasisNumber
-                    FROM MTN_BusInformation
-                    WHERE CompanyId=2;
-                    ''')
-        
-        
-    Uber_busses_list = cursor.fetchall()
-    buses_list = [{'BusCode': row.BusCode, 'VehicleNumber': row.VehicleNumber, 
-                   'ChasisNumber': row.ChasisNumber} for row in Uber_busses_list]
-    return buses_list 
-
-
-
-
-def Get_route_count(user_group):
-    if user_group == 'MBMT':
-            company_id = 1
-    elif user_group == 'Uber':
-        company_id = 2
-
-    cursor.execute(f'''
-                    SELECT COUNT(DISTINCT(Code)) FROM OPR_Route WHERE CompanyId = '{company_id}';
-                    ''')
-        
-        
-    route_count = cursor.fetchall()
-    return route_count[0][0]
-
-
-def Get_Buses_count(user_group):
-    if user_group == "MBMT":
-        bus_count = cursor.execute('''
-                        SELECT COUNT(*) FROM  MTN_BusInformation
-                        WHERE CompanyId=1 ;
-                        ''')   
-
-    elif user_group == "Uber":  
-        bus_count = cursor.execute('''
-                        SELECT COUNT(*) FROM MTN_BusInformation
-                        WHERE CompanyId=2 ;
-                        ''') 
-
-
-    buses_count = bus_count.fetchone()
-    return buses_count[0]
-    
-  
-def Get_Trip_Count(vehicalNumber , start_date , end_date , user_group):
-    if user_group == 'MBMT':
-            company_id = 1
-    elif user_group == 'Uber':
-        company_id = 2
-
-
-    if vehicalNumber and start_date and end_date:
-        
-             
-        trip= cursor.execute(f'''SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId ) as TotalTrips
-            FROM   MTN_BusInformation INNER JOIN
-            OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
-            OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId INNER JOIN
-            OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-            where OPR_SchedulingDetailsTrip.IsLost=0 and MTN_BusInformation.CompanyId = {company_id}
-            and MTN_BusInformation.VehicleNumber= '{vehicalNumber}' and OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}' ''')
-
-    else:
-        trip = cursor.execute(f'''SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId ) as TotalTrips
-                    FROM   MTN_BusInformation INNER JOIN
-                    OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
-                    OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId INNER JOIN
-                    OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-                    where OPR_SchedulingDetailsTrip.IsLost=0 and MTN_BusInformation.CompanyId = {company_id}''')
-        
-    
-    trip_count = trip.fetchall()
-    return trip_count[0][0]
-
-
-
-def Get_Distance_Km(vehicalNumber , start_date , end_date , user_group):
-
-    if user_group == 'MBMT':
-            company_id = 1
-    elif user_group == 'Uber':
-        company_id = 2
-    if vehicalNumber and start_date and end_date:
+    def get_buses_list(self , date = None):
+        # self.cursor.execute(f'''
+        #     SELECT BusCode, VehicleNumber, ChasisNumber
+        #     FROM MTN_BusInformation
+        #     WHERE CompanyId = '{self.company_id}';
+        # ''')
             
-        #query written by gaurav jain
-        '''SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM ) as TotalKms
-        FROM   MTN_BusInformation INNER JOIN
-        OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
-        OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId INNER JOIN
-        OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-        where OPR_SchedulingDetailsTrip.IsLost=0
-        and MTN_BusInformation.VehicleNumber='MH04LQ5736' and OPR_Scheduling.SchedulingDate='2024-06-01' '''
-     
-        distance = cursor.execute(f'''SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM ) as TotalKms
-            FROM   MTN_BusInformation INNER JOIN
-            OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
-            OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId INNER JOIN
-            OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-            where OPR_SchedulingDetailsTrip.IsLost=0 and MTN_BusInformation.CompanyId = {company_id}
-            and MTN_BusInformation.VehicleNumber='{vehicalNumber}' and OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}' ''')
+        self.cursor.execute(f'''
+                            SELECT mtn.BusInformationId, mtn.BusType, mtn.BusCode, mtn.VehicleNumber,mtn.ChasisNumber,os.SchedulingDate,
+                            
+                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartSOC ELSE NULL END) AS MorningStartSOC,
+                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndSOC ELSE NULL END) AS MorningEndSOC,
+                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartODO ELSE NULL END) AS MorningStartODO,
+                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndODO ELSE NULL END) AS MorningEndODO,
+                            
+                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartSOC ELSE NULL END) AS EveningStartSOC,
+                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndSOC ELSE NULL END) AS EveningEndSOC,
+                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartODO ELSE NULL END) AS EveningStartODO,
+                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndODO ELSE NULL END) AS EveningEndODO
+
+                            FROM 
+                                MTN_BusInformation mtn
+                            JOIN 
+                                OPR_SchedulingDetails osd ON mtn.BusInformationId = osd.BusInformationId
+                            JOIN 
+                                OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+                            WHERE 
+                                osd.IsDelete = 0  
+                                AND (os.IsDelete = 0 OR os.IsDelete IS NULL) 
+                                AND os.SchedulingDate = '{date}'
+                            GROUP BY 
+                                mtn.BusInformationId, mtn.CompanyId, mtn.BranchId, mtn.VehicleNumber,mtn.ChasisNumber,
+                                mtn.VehicleType, mtn.BusType, mtn.BusCode,os.SchedulingDate
+                            ORDER BY 
+                                mtn.BusInformationId;''')
+            
+        result = self.cursor.fetchall()
+        return [{'id' : row.BusInformationId, 'BusCode': row.BusCode, 'VehicleNumber': row.VehicleNumber , 
+                 'SchedulingDate' : row.SchedulingDate , 
+                 'Morning_shift' : {'StartSOC' : row.MorningStartSOC , 'EndSOC' : row.MorningEndSOC ,
+                                     'StartODO' : row.MorningStartODO , 'EndODO' : row.MorningEndODO },
+                  'Evening_shift': {'StartSOC' :row.EveningStartSOC, 'EndSOC' : row.EveningEndSOC , 
+                                    'StartODO' : row.EveningStartODO , 'EndODO' : row.EveningEndODO}
+                 } for row in result]
+
+
+    def Get_Schedule_Buses_List(self , scheduling_date = None , route_id= None):
+
+        self.cursor.execute(f'''
+                        SELECT o.RouteId as RouteId, osd.BusInformationId as BusInformationId , 
+                        os.SchedulingDate as SchedulingDate , osd.BusCode as BusCode , o.Code as ScheduleCode
+                        FROM OPR_Scheduling os
+                        JOIN OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                        JOIN OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                        WHERE os.SchedulingDate = '{scheduling_date}'  AND o.RouteId = {route_id} ;
+                        ''')
         
-
-    else:
-        
-        distance = cursor.execute(f'''SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM ) as TotalKms
-
-                        FROM  MTN_BusInformation INNER JOIN
-
-                        OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId INNER JOIN
-
-                        OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId INNER JOIN
-
-                        OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-
-                        where OPR_SchedulingDetailsTrip.IsLost=0 and MTN_BusInformation.CompanyId = {company_id}''' )
-        
-        
-    distance_Km = distance.fetchall()
-    distance_ = distance_Km[0][0]
-    if distance_ is None:
-        distance_Km = 0
-    else:
-        distance_Km = distance_
+        result = self.cursor.fetchall()
+        buses_list = [{'RouteId': row.RouteId , 'BusInformationId' : row.BusInformationId , 
+                    'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
+        return buses_list
     
-    return round(distance_Km)
+    def get_buses_count(self):
+        self.cursor.execute(f'''
+            SELECT COUNT(*)
+            FROM MTN_BusInformation
+            WHERE CompanyId = '{self.company_id}';
+        ''')
+        return self.cursor.fetchone()[0]
+
+
+    def get_charger_count(self):
+        self.cursor.execute(f'''
+                        SELECT COUNT(*) as ChargerCount
+                        FROM MTN_ChargerMaster
+                        WHERE CompanyId = '{self.company_id}';
+                        ''')
+        
+        return self.cursor.fetchone()[0]
+    
+
+    def get_trip_count(self, vehicle_number=None, start_date=None, end_date=None):
+        query = f'''
+            SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId) AS TotalTrips
+            FROM MTN_BusInformation
+            INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+            INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+            INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+            WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
+        '''
+        if vehicle_number and start_date and end_date:
+            query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+
+        self.cursor.execute(query)
+        return self.cursor.fetchone()[0]
+
+    def get_distance_km(self, vehicle_number=None, start_date=None, end_date=None):
+        query = f'''
+            SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM) AS TotalKms
+            FROM MTN_BusInformation
+            INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+            INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+            INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+            WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
+        '''
+        if vehicle_number and start_date and end_date:
+            query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+
+        self.cursor.execute(query)
+        distance_km = self.cursor.fetchone()[0] or 0
+        return round(distance_km)
+
+
+
+
+
+class Vehicletracking:
+
+    def get_live_bus_details(all_devices):
+        data_list = []
+        if all_devices:
+            today = date.today()
+            for device in all_devices:
+                device_details = LivedeviceDetailsSerialiser(device).data
+                try:
+                    device_location = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
+                    device_location_data = LiveDeviceSeailizer(device_location).data
+                    # Merging device location into device details
+                    device_details.update(device_location_data)
+                except MasterDeviceDetails.DoesNotExist:
+                    # If no location data is found for the device, continue to the next device
+                    continue
+
+                data_list.append(device_details)
+    
+        return data_list

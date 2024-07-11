@@ -13,7 +13,6 @@ class DatabaseConnection:
     def connect(self):
         try:
             self.connection = pyodbc.connect(self.connection_string)
-            print("Database connection successful.")
         except pyodbc.Error as ex:
             print(f"An error occurred: {ex.args[1]}")
 

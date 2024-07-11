@@ -4,10 +4,9 @@ from rest_framework.response import Response
 import json
 
 from .database_opertaions import *
-import time
+
 from .utils import *
 from .serializers import *
-import uuid
 from rest_framework.views import APIView
 from datetime import  date
 from django.contrib.auth.models import User
@@ -18,9 +17,6 @@ from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
 from .permissions import *
-import os
-from VehicalTracking import settings
-from django.core.mail import send_mail
 from database.models import *
 from rest_framework.throttling import UserRateThrottle , AnonRateThrottle
 
