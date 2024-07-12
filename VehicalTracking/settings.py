@@ -15,10 +15,8 @@ import os
 import environ
 
 
-
 env = environ.Env()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "VehicalTracking.settings")
 # reading .env file
 environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -56,8 +54,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'rest_framework',
     'rest_framework_gis',
-    'database',
-    'vehicle',
+    'database.apps.DatabaseConfig',
+    'vehicle.apps.VehicleConfig',
     'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
     'django_filters',
@@ -80,7 +78,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'VehicalTracking.urls'
 CORS_ALLOW_ALL_ORIGINS = True 
 
-
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "VehicalTracking.settings")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -97,8 +95,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
 ASGI_APPLICATION = 'VehicalTracking.asgi.application'
+WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
+
 
 
 

@@ -61,11 +61,6 @@ class ITMS:
         return self.cursor.fetchone()[0]
 
     def get_buses_list(self , date = None):
-        # self.cursor.execute(f'''
-        #     SELECT BusCode, VehicleNumber, ChasisNumber
-        #     FROM MTN_BusInformation
-        #     WHERE CompanyId = '{self.company_id}';
-        # ''')
             
         self.cursor.execute(f'''
                             SELECT mtn.BusInformationId, mtn.BusType, mtn.BusCode, mtn.VehicleNumber,mtn.ChasisNumber,os.SchedulingDate,
@@ -185,14 +180,11 @@ class Vehicletracking:
             for device in all_devices:
                 device_details = LivedeviceDetailsSerialiser(device).data
                 try:
-                    device_location = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
-                    device_location_data = LiveDeviceSeailizer(device_location).data
-                    # Merging device location into device details
-                    device_details.update(device_location_data)
+                    instance = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
+                    device_data = LiveDeviceSeailizer(instance).data
+                    device_details.update(device_data)
                 except MasterDeviceDetails.DoesNotExist:
-                    # If no location data is found for the device, continue to the next device
                     continue
-
                 data_list.append(device_details)
     
         return data_list
