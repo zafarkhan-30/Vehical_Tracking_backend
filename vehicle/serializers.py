@@ -71,11 +71,29 @@ class deviceDetailsSerialiser(serializers.ModelSerializer):
 
 
 class DataListSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
     class Meta:
         model = MasterDeviceDetails
-        exclude = ("id" ,'device')
+        exclude = ("id" ,)
+
+    
+    def get_name(Self , obj):
+        return obj.device.name
         
-        depth = 1
+        
+
+
+# class DataListSerializer(serializers.ModelSerializer):
+#     name = serializers.SerializerMethodField()
+#     class Meta:
+#         model = MasterDeviceDetails
+#         fields = ["name","gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
+#                    "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
+        
+#         depth= 1
+
+#     def name_get(self , data):
+#         return data.device.name
 
 
 class getDataListSerializer(serializers.ModelSerializer):

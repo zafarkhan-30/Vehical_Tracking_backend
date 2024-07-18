@@ -347,7 +347,7 @@ class GetDeviceParametersDetails(generics.ListAPIView):
     queryset = devices.objects.all()
 
 
-def get_devices_details_view(query_params=None):
+def get_devices_details_view(query_params=None , user_group = None):
     try:
         data_list = []
         if query_params:
@@ -355,25 +355,32 @@ def get_devices_details_view(query_params=None):
             
             for name in names:
                 devices_list = devices.objects.filter(name__icontains=name)
+                # print(devices_list)
 
                 for device in devices_list:
                     device_details_serailizer = deviceDetailsSerialiser(device).data
+                    # print(device_details_serailizer)
                     today = date.today()
                     try:
-                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , 
+                                                                              created_at__date=today).latest("created_at")
+                        print(master_data_list , "master")
                         data_list_serializer = DataListSerializer(master_data_list).data
                     except:
                         continue
-
                     data_list.append({
                         'device_details' : device_details_serailizer,
                         'data' : data_list_serializer
                     })
+        print(len(data_list))
         return data_list
     except Exception as e:
         return Response({'status': 'error' ,
                           'message': str(e)} , status= 200)
     
+
+
+
 
 def get_MBMT_device_details_view(query_params=None):
     try:

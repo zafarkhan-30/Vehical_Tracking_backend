@@ -14,9 +14,16 @@ class GetDevice_Data(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.query_params = None
+        self.user = None
 
     async def connect(self):
         await self.accept()
+        self.user = self.scope['user']
+        
+        # if str(self.user) == 'AnonymousUser' :
+        #     await self.send(text_data=json.dumps({"error_message": "User not authenticated"}))
+        #     await self.close()
+        # else:  
         await self.send(text_data=json.dumps({"message": "Connected"}))
 
     async def disconnect(self, close_code):
@@ -26,17 +33,17 @@ class GetDevice_Data(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
         self.query_params = data.get('query_params', {})
-        # await self.send(text_data=json.dumps({"message": "Query parameters updated"}))
-
-        # Start fetching data periodically after receiving the first query_params
+        
         if not hasattr(self, 'fetch_data_task'):
             self.fetch_data_task = asyncio.create_task(self.fetch_data_periodically())
 
     async def fetch_data(self):
         async with httpx.AsyncClient() as client:
             try:
+                
                 if self.query_params:
-                    response = await sync_to_async(get_devices_details_view)(self.query_params)
+                    user_group = self.user.groups.first()
+                    response = await sync_to_async(get_devices_details_view)(self.query_params ,user_group)
                 else:
                     response = await sync_to_async(get_devices_details_view)()
 
