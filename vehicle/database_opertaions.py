@@ -29,7 +29,6 @@ def parse_float(value: Any):
         return 0.0
 
 def create_master_device_details(device_instances: int, data: Dict[str, Any]):
-    print(device_instances)
     active = data.get("active")
     status = data.get("status")
 
