@@ -16,20 +16,19 @@ def create_device_object(device_detail):
             )
 
 
-
-def parse_timestamp(timestamp: Any) -> datetime.datetime:
+def parse_timestamp(timestamp: Any):
     try:
         return datetime.datetime.fromtimestamp(timestamp) if timestamp else None
     except (ValueError, TypeError):
         return None
 
-def parse_float(value: Any) -> float:
+def parse_float(value: Any):
     try:
         return float(value)
     except (ValueError, TypeError):
         return 0.0
 
-def create_master_device_details(device_instances: int, data: Dict[str, Any]) -> 'MasterDeviceDetails':
+def create_master_device_details(device_instances: int, data: Dict[str, Any]):
     print(device_instances)
     active = data.get("active")
     status = data.get("status")

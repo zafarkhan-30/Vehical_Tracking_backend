@@ -1,18 +1,14 @@
-from django.shortcuts import render
 from rest_framework import generics 
 from rest_framework.response import Response
 import json
-
 from .database_opertaions import *
-
 from .utils import *
 from .serializers import *
 from rest_framework.views import APIView
 from datetime import  date
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny , IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import Group
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser
@@ -72,9 +68,6 @@ class LoginView(generics.GenericAPIView):
             
             user = authenticate(username=username , password=password)
             if user is not None:
-                user1 = User.objects.filter(username=username)
-                print(user.groups.first())
-                # serializer2 = RegisterSerializer(user1 ,many=True)
                 try:
                     token = Token.objects.create(user=user)
                 except:
@@ -94,13 +87,8 @@ class LoginView(generics.GenericAPIView):
                 return Response({'status': 'error',
                                 'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
         else:
-            # print(serializer.errors)
             return Response({'status': 'error',
                             'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 
 
 class LogoutView(generics.GenericAPIView):
@@ -142,10 +130,7 @@ class PostMasterDeviceData(APIView):
         else:
             return Response(response.content, status=response.status_code)
  
-
-
-        
-        
+   
 class ViewDeviceAllDetails(APIView):
     permission_classes = [IsAuthenticated , IsAchargeZone  | IsBattery_IQ | IsAmnex ]
     throttle_classes = [UserRateThrottle , AnonRateThrottle]
@@ -163,8 +148,7 @@ class ViewDeviceAllDetails(APIView):
     def get_queryset(self):
         
         name = self.request.query_params.get('name')
-        
-        queryset = devices.objects.none()  # Initialize an empty queryset
+        queryset = devices.objects.none()
         if name:
             queryset |= devices.objects.filter(name__icontains='MBMT')
         else:
@@ -187,19 +171,17 @@ class ViewDeviceAllDetails(APIView):
     def get(self, request):
 
         data_list = []
-
         all_devices = self.get_queryset()
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
+
         if all_devices:
             
             for device in all_devices:
-                device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
                 if start_date and end_date:
                     try:
                         master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__range=[start_date , end_date]).latest("created_at")
-                        
                     except:
                         continue
                 else:
@@ -211,7 +193,6 @@ class ViewDeviceAllDetails(APIView):
                 data_list_serializer = DataListSerializer(master_data_list).data
                 data_list.append({
                     'data' : data_list_serializer
-
                 })
 
         if len(data_list) ==0:
@@ -224,7 +205,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
     # permission_classes = [IsAuthenticatedOrReadOnly , IsMBMT | IsAmnex ]
     throttle_classes = [AnonRateThrottle]
 
-    # throttle_classes = [AnonRateThrottle]
+
     """
     This function is used to filter the queryset based on the 'name' query parameter.
     If 'name' is provided, it filters the devices with names containing the 'name'.
@@ -265,7 +246,6 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
         data_list = []
         all_devices = self.get_queryset()
         if all_devices:
-          
             for device in all_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
@@ -282,7 +262,8 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
                     
                     })
         else: 
-            return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+            return Response({'status': 'error' ,
+                              'message': 'No data available'} , status= 200)
          
         return Response(data_list)
     
@@ -355,16 +336,13 @@ def get_devices_details_view(query_params=None , user_group = None):
             
             for name in names:
                 devices_list = devices.objects.filter(name__icontains=name)
-                # print(devices_list)
 
                 for device in devices_list:
                     device_details_serailizer = deviceDetailsSerialiser(device).data
-                    # print(device_details_serailizer)
                     today = date.today()
                     try:
                         master_data_list = MasterDeviceDetails.objects.filter(device_id = device , 
                                                                               created_at__date=today).latest("created_at")
-                        print(master_data_list , "master")
                         data_list_serializer = DataListSerializer(master_data_list).data
                     except:
                         continue
@@ -372,44 +350,11 @@ def get_devices_details_view(query_params=None , user_group = None):
                         'device_details' : device_details_serailizer,
                         'data' : data_list_serializer
                     })
-        print(len(data_list))
         return data_list
     except Exception as e:
         return Response({'status': 'error' ,
                           'message': str(e)} , status= 200)
     
-
-
-
-
-def get_MBMT_device_details_view(query_params=None):
-    try:
-        data_list = []
-
-        if query_params:
-            name = query_params.get('name')
-            devices_list = devices.objects.filter(name__icontains=name)
-        else:
-            devices_list = devices.objects.filter(name__icontains="MBMT")
-
-        for device in devices_list:
-            device_details_serailizer = deviceDetailsSerialiser(device).data
-            today = date.today()
-            try:
-                master_data_list = MasterDeviceDetails.objects.filter(device_id=device, created_at__date=today).latest("created_at")
-                data_list_serializer = DataListSerializer(master_data_list).data
-            except MasterDeviceDetails.DoesNotExist:
-                data_list_serializer = None
-
-            data_list.append({
-                'device_details': device_details_serailizer,
-                'data': data_list_serializer
-            })
-
-        return data_list
-    except Exception as e:
-        return {'status': 'error', 'message': str(e)}
-
 
 class GettimeRangedateData(generics.GenericAPIView):
     def get( self, request , device_name , start_date ,end_date ):
@@ -417,17 +362,16 @@ class GettimeRangedateData(generics.GenericAPIView):
             data_list = []
             uber_devices = devices.objects.filter(name = device_name)
             for device in uber_devices:
-                    device_details_serailizer = deviceDetailsSerialiser(device).data
-                    try:
-                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__range=(start_date, end_date))
-                        data_list_serializer = DataListSerializer(master_data_list , many = True).data
-                    except:
-                        continue
-
-                    data_list.append({
-                        'device_details' : device_details_serailizer,
-                        'data' : data_list_serializer
-                    })
+                device_details_serailizer = deviceDetailsSerialiser(device).data
+                try:
+                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__range=(start_date, end_date))
+                    data_list_serializer = DataListSerializer(master_data_list , many = True).data
+                except:
+                    continue
+                data_list.append({
+                    'device_details' : device_details_serailizer,
+                    'data' : data_list_serializer
+                })
             return Response (data_list)
         except:
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
@@ -444,7 +388,6 @@ class GetNoidaExtenToIncedointellectRouteView(generics.GenericAPIView):
                             'data': data},
                             status= status.HTTP_200_OK)
     
-
 
 class GetNoidaExtenToIncedointellectStopsView(generics.GenericAPIView):
     serializer_class = NoidaExtenToIncedointellectStopsSerializer 

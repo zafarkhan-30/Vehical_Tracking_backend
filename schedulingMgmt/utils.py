@@ -60,7 +60,7 @@ class ITMS:
         ''')
         return self.cursor.fetchone()[0]
 
-    def get_buses_list(self , date = None):
+    def get_buses_detail_list(self , date = None):
             
         self.cursor.execute(f'''
                             SELECT mtn.BusInformationId, mtn.BusType, mtn.BusCode, mtn.VehicleNumber,mtn.ChasisNumber,os.SchedulingDate,
@@ -101,7 +101,7 @@ class ITMS:
                  } for row in result]
 
 
-    def get_chargers_list(self):
+    def get_charger_detail_list(self):
         self.cursor.execute(f'''
                         SELECT 
                         cm.ChargerMasterId,
@@ -179,6 +179,8 @@ class ITMS:
                     'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
         return buses_list
     
+
+
     def get_buses_count(self):
         self.cursor.execute(f'''
             SELECT COUNT(*)

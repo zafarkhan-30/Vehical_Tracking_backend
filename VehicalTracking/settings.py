@@ -99,14 +99,11 @@ ASGI_APPLICATION = 'VehicalTracking.asgi.application'
 WSGI_APPLICATION = 'VehicalTracking.wsgi.application'
 
 
-
-
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
-
 
 DATABASES = {
     'default': {
@@ -118,8 +115,16 @@ DATABASES = {
         'PORT': '5432',
     },
 
-}
+    # 'default': {
+    #     'ENGINE': 'django.contrib.gis.db.backends.postgis',
+    #     'NAME': env("PROD_DATABASE_NAME"),
+    #     'USER': env("PROD_DATABASE_USER"),
+    #     'PASSWORD': env("PROD_DATABASE_PASSWORD"),
+    #     'HOST': env("PROD_DATABASE_HOST"),
+    #     'PORT': env("PROD_DATABASE_PORT"),
+    # },
 
+}
 
 
 REST_FRAMEWORK = {
@@ -149,30 +154,6 @@ SWAGGER_SETTINGS = {
     },
 }
 
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.UserRateThrottle',
-    #     'rest_framework.throttling.AnonRateThrottle',
-    # ],
-
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'user': '100/day',   
-    #     'anon': '5000/day',   
-    # }
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'mssql',
-#         'NAME': 'VehicleTracking',
-#         'USER': 'sa',
-#         'PASSWORD': 'vtpl@123',
-#         'HOST': '103.248.60.42',
-#         'PORT': '1433',
-#         'OPTIONS': {
-#             'driver': 'ODBC Driver 17 for SQL Server',
-#         },
-#     },
-# }
 
 
 # Password validation
@@ -222,11 +203,6 @@ MEDIA_URL = "/media/"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# CRONJOBS = [
-#     ('* * * * *', 'vehicle.cron_job.Command.handle'),
-  
-# ]
 CRONJOBS = [
     ('* * * * *', 'vehicle.cron_job.run_device_details_view'),
   

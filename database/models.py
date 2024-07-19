@@ -23,7 +23,6 @@ class devices(models.Model):
 
 
 class MasterDeviceDetails(models.Model):
-
     device = models.ForeignKey(devices , related_name = "master_device_id" , on_delete = models.CASCADE, null = True)
 
     active = models.BooleanField(default=False)
@@ -60,8 +59,6 @@ class MasterDeviceDetails(models.Model):
 
 
     timestamp = models.BigIntegerField(null = True)
-    # latitude= models.DecimalField(max_digits=17, decimal_places=15 ,null = True)
-    # longitude= models.DecimalField(max_digits=17, decimal_places=15, null = True)
     alert_location = models.PointField(null= True , blank= True)
     alert_address = models.CharField(max_length=1000 , blank = True , null = True)
     alarmType = models.IntegerField(null = True)

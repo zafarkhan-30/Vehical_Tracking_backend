@@ -28,8 +28,6 @@ def refresh_access_token():
 
 
 def get_device_Data(refresh_token):
-    # access_token = get_access_token()
-
     url = "https://intouch.mapmyindia.com/iot/api/device"
     headers = {"Authorization": f"Bearer {refresh_token}"}
 

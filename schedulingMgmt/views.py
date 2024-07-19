@@ -1,14 +1,13 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .utils import ITMS , get_db_cursor
+from .utils import ITMS , get_db_cursor , Vehicletracking
 from .permissions import IsUber
 from .serializers import *
 from vehicle.permissions import IsMBMT
 from rest_framework import status
 from database.models import *
 
-from .utils import db_connection, ITMS , Vehicletracking
 
 
 class GetRouteList(GenericAPIView):
@@ -91,7 +90,7 @@ class GetBussesList(GenericAPIView):
             )
         itms = ITMS(cursor , user_group)
         if date:
-            buses_list = itms.get_buses_list(date)
+            buses_list = itms.get_buses_detail_list(date)
         else:
             all_devices = self.get_queryset(user_group)
             live = Vehicletracking.get_live_bus_details(all_devices)
@@ -111,19 +110,16 @@ class GetBussesList(GenericAPIView):
         )
 
 
-
 class GetChargersList(GenericAPIView):
     serializer_class = None
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
 
     def get_queryset(self , user_group):
-       
         queryset = devices.objects.filter(name__icontains=user_group)  
         return queryset
     
     def get(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
-        date = self.request.query_params.get('date')
         try:
             cursor = get_db_cursor()
         except Exception as e:
@@ -135,7 +131,7 @@ class GetChargersList(GenericAPIView):
             )
         itms = ITMS(cursor , user_group)
      
-        Charger_list = itms.get_chargers_list()
+        Charger_list = itms.get_charger_detail_list()
         return Response(
             {
                 "status": "success",

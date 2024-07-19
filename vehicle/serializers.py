@@ -4,8 +4,6 @@ from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 
-
-
 def get_group_choice():
 	"""
 	The function "get_group_choice" returns all the available group names in the database as a tuple of
@@ -15,8 +13,6 @@ def get_group_choice():
 	"""
 	group_names = list(Group.objects.values_list("name",flat=True))
 	return tuple((i,i) for i in group_names)
-
-
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style = {'input_type':'password'},write_only = True)
@@ -43,8 +39,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("groups")
         return User.objects.create_user(**validated_data)
     
-
-
 class LoginSerializer(serializers.Serializer):
 
     username = serializers.CharField()
@@ -56,19 +50,10 @@ class LoginSerializer(serializers.Serializer):
 class logoutSerializer(serializers.Serializer):
     token = serializers.CharField(max_length = 255 , required =True)
 
-
-
-
-
-
-
-
 class deviceDetailsSerialiser(serializers.ModelSerializer):
     class Meta:
         model = devices
         fields = ["device_id" , "name" , "registrationNumber" , "deviceType" , "chassisNumber" , "trackingCode"]
-
-
 
 class DataListSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
@@ -80,22 +65,6 @@ class DataListSerializer(serializers.ModelSerializer):
     def get_name(Self , obj):
         return obj.device.name
         
-        
-
-
-# class DataListSerializer(serializers.ModelSerializer):
-#     name = serializers.SerializerMethodField()
-#     class Meta:
-#         model = MasterDeviceDetails
-#         fields = ["name","gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
-#                    "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
-        
-#         depth= 1
-
-#     def name_get(self , data):
-#         return data.device.name
-
-
 class getDataListSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterDeviceDetails
@@ -109,34 +78,24 @@ class MBMTDeviceLocationSerializer(GeoFeatureModelSerializer):
         fields = ["gpsTime" , "gprsTime" , "altitude" , "heading" ,  "speedKph" ,"address",
                    "odometer" , "gpsSignal" , "created_at" ,  "stateOfCharge"]
         geo_field='device_location'
-
-
-
-
-     
+  
 class NoidaExtenToIncedointellectRouteSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = NoidaExtenToIncedointellectRoute
         fields = ("name" ,)
         geo_field = "geom"
          
-
 class NoidaExtenToIncedointellectStopsSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = NoidaExtenToIncedointellectStops
         fields = ("name" ,)
         geo_field = "geom"
 
-
-
-
 class GetRouteNo15BusStopsSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = RouteNo15BusStops
         fields = ("name" ,)
         geo_field = "geom"
-
-
 
 class GetRoute15Serializer(GeoFeatureModelSerializer):
     class Meta:
