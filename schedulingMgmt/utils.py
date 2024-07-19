@@ -101,6 +101,68 @@ class ITMS:
                  } for row in result]
 
 
+    def get_chargers_list(self):
+        self.cursor.execute(f'''
+                        SELECT 
+                        cm.ChargerMasterId,
+                        cm.ChargerNumber,
+                        cm.Status ,
+                        cm.SerialNumber,
+                        MAX(bc.ChargingDate) AS LastChargingDate,
+                        COUNT(bc.BusInformationId) AS TotalBusesChargedToday,
+                        SUM(bc.EnergyConsumption) AS TotalEnergyConsumedToday,
+                        SUM(CAST(bc.SessionTime AS int)) / 60.00 AS TotalOperationalHoursToday,
+                        (
+                            SELECT COUNT(DISTINCT bc2.BusInformationId)
+                            FROM MTN_BusCharging bc2
+                            WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                        ) AS TotalBusesChargedTillDate,
+                        (
+                            SELECT SUM(bc2.EnergyConsumption)
+                            FROM MTN_BusCharging bc2
+                            WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                        ) AS TotalEnergyConsumedTillDate,
+                        (
+                            SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
+                            FROM MTN_BusCharging bc2
+                            WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                        ) AS TotalOperationalHoursTillDate
+                    FROM 
+                        MTN_BusCharging bc
+                    JOIN 
+                        MTN_ChargerMaster cm ON bc.ChargerMasterId = cm.ChargerMasterId
+                    WHERE 
+                        bc.ChargingDate = (SELECT MAX(ChargingDate) FROM MTN_BusCharging WHERE ChargerMasterId = cm.ChargerMasterId) AND cm.CompanyId = '{self.company_id}'
+                    GROUP BY 
+                        cm.ChargerMasterId, 
+                        cm.ChargerNumber, 
+                        cm.Status ,
+                        cm.SerialNumber
+                    ORDER BY 
+                        cm.ChargerMasterId;
+
+                            ''')
+        
+        query = self.cursor.fetchall()
+        query_result = [{
+             "ChargerNumber" : row.ChargerNumber , 
+             "Status" : row.Status,
+            'Latest_data': {
+                "date" : row.LastChargingDate ,
+                'BusesCharged' : row.TotalBusesChargedToday,
+                'EnergyConsumed' : round(row.TotalEnergyConsumedToday),
+                'OperationalHours' : row.TotalOperationalHoursToday
+            },
+            'Total' : {
+                'BusesCharged': row.TotalBusesChargedTillDate ,
+                'EnergyConsumed' : round(row.TotalEnergyConsumedTillDate),
+                'OperationalHours' : round(row.TotalOperationalHoursTillDate)
+            }
+        } for row in query]
+        return query_result
+
+
+
     def Get_Schedule_Buses_List(self , scheduling_date = None , route_id= None):
 
         self.cursor.execute(f'''

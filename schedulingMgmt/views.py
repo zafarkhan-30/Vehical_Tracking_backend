@@ -112,6 +112,39 @@ class GetBussesList(GenericAPIView):
 
 
 
+class GetChargersList(GenericAPIView):
+    serializer_class = None
+    permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
+
+    def get_queryset(self , user_group):
+       
+        queryset = devices.objects.filter(name__icontains=user_group)  
+        return queryset
+    
+    def get(self, request, *args, **kwargs):
+        user_group = str(request.user.groups.first())
+        date = self.request.query_params.get('date')
+        try:
+            cursor = get_db_cursor()
+        except Exception as e:
+            return Response(
+                {
+                    "status": "error",
+                    "message": str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        itms = ITMS(cursor , user_group)
+     
+        Charger_list = itms.get_chargers_list()
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    'Charger_list' : Charger_list
+            }
+            } , status= status.HTTP_200_OK
+        )
+
 class GetdashboardCountView(GenericAPIView):
     serializer_class = GetTotalTripCountSerilizsers
     permission_classes = [IsAuthenticated , IsUber | IsMBMT]
@@ -138,6 +171,7 @@ class GetdashboardCountView(GenericAPIView):
         route_count = itms.get_route_count()
         buses_count = itms.get_buses_count()
         Charger_count = itms.get_charger_count()
+
 
         return Response(
             {
