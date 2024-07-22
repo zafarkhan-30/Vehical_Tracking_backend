@@ -107,7 +107,6 @@ class LogoutView(generics.GenericAPIView):
 
 
 class PostMasterDeviceData(APIView):
-
     def get(self , request):
         refresh_token = refresh_access_token()
         response = get_device_Data(refresh_token)
@@ -271,18 +270,10 @@ class ViewAmnexDeviceDetails(APIView):
     permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
     throttle_classes = [UserRateThrottle , AnonRateThrottle]
     def get_queryset(self):
-        
-        # name = self.request.query_params.get('name')
-        
-        # queryset = devices.objects.none()  # Initialize an empty queryset
-        # if name:
-        #     queryset |= devices.objects.filter(name__icontains='MBMT')
-        # else:
+
         queryset = devices.objects.filter(name__icontains='MBMT')
             
         return queryset
-    
-
     """
     This function is used to retrieve and serialize device details.
     It fetches all related device details using prefetch_related and then serializes them.
@@ -297,29 +288,26 @@ class ViewAmnexDeviceDetails(APIView):
     """
     def get(self, request):
         data_list = []
-        # all_devices = devices.objects.all()
         all_devices = self.get_queryset()
-        # print(all_devices)
         if all_devices:
           
             for device in all_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
-                
                 try:
-                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device , created_at__date=today).latest("created_at")
+                    master_data_list = MasterDeviceDetails.objects.filter(device_id = device ,
+                                                                           created_at__date=today).latest("created_at")
                     data_list_serializer = DataListSerializer(master_data_list).data
                 except:
                     continue
-
                 data_list.append({
                     'device_details' : device_details_serailizer,
                     'data' : data_list_serializer
 
                 })
         else: 
-            return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
-         
+            return Response({'status': 'error' ,
+                              'message': 'No data available'} , status= 200)
         return Response(data_list)
     
 class GetDeviceParametersDetails(generics.ListAPIView):
@@ -375,6 +363,12 @@ class GettimeRangedateData(generics.GenericAPIView):
             return Response (data_list)
         except:
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
+
+
+
+
+
+# Routes and Stop APIs
 
 
 class GetNoidaExtenToIncedointellectRouteView(generics.GenericAPIView):

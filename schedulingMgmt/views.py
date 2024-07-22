@@ -7,6 +7,8 @@ from .serializers import *
 from vehicle.permissions import IsMBMT
 from rest_framework import status
 from database.models import *
+from rest_framework.parsers import MultiPartParser
+from VehicalTracking import settings
 
 
 
@@ -37,8 +39,6 @@ class GetRouteList(GenericAPIView):
         )
 
 
-
-
 class GetScheduleBusesList(GenericAPIView):
     permission_classes= [IsAuthenticated , IsUber | IsMBMT ]
     serializer_class = None
@@ -64,7 +64,6 @@ class GetScheduleBusesList(GenericAPIView):
             }
             } , status= status.HTTP_200_OK
         )
-
 
 
 class GetBussesList(GenericAPIView):
@@ -191,3 +190,44 @@ class GetdashboardCountView(GenericAPIView):
 
 
 
+
+# from sqlalchemy import create_engine 
+# import geopandas as gpd
+# from django.core.files.storage import default_storage
+# from django.core.files.base import ContentFile
+# import os
+
+
+# class ImportShapeFile(GenericAPIView):
+#     serializer_class = ImportShapeFileSerializer
+#     parser_classes = [MultiPartParser]
+
+#     def post(self, request):
+#         db_settings = settings.DATABASES['default']
+                
+#         # Construct the connection string
+#         user = db_settings['USER']
+#         password = db_settings['PASSWORD']
+#         host = db_settings['HOST']
+#         port = db_settings['PORT']
+#         database = db_settings['NAME']
+
+#         conn = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+#         engine = create_engine(conn)
+
+#         shape_file = request.FILES.get('shape_file')
+        
+#         if not shape_file:
+#             return Response({"error": "No shapefile provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Save the uploaded file to the temporary directory
+#         file_name = default_storage.save(shape_file.name, ContentFile(shape_file.read()))
+#         file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+        
+       
+#         # Read the shapefile using GeoPandas
+#         gdf = gpd.read_file(file_path)
+#         print(gdf)
+        
+#         # gdf.to_postgis(name="boundary", con=engine, schema="public", if_exists='replace')
+#         return Response(None)

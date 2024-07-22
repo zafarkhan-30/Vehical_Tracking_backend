@@ -50,7 +50,8 @@ class ITMS:
             WHERE CompanyId = '{self.company_id}';
         ''')
         result = self.cursor.fetchall()
-        return [{'route_id': row.RouteId, 'Name': row.Name, 'Code': row.Code} for row in result]
+        return [{'route_id': row.RouteId, 'Name': row.Name, 
+                 'Code': row.Code} for row in result]
 
     def get_route_count(self):
         self.cursor.execute(f'''
@@ -113,7 +114,7 @@ class ITMS:
                         SUM(bc.EnergyConsumption) AS TotalEnergyConsumedToday,
                         SUM(CAST(bc.SessionTime AS int)) / 60.00 AS TotalOperationalHoursToday,
                         (
-                            SELECT COUNT(DISTINCT bc2.BusInformationId)
+                            SELECT COUNT(bc2.BusInformationId)
                             FROM MTN_BusCharging bc2
                             WHERE bc2.ChargerMasterId = cm.ChargerMasterId
                         ) AS TotalBusesChargedTillDate,

@@ -23,3 +23,10 @@ class LivedeviceDetailsSerialiser(serializers.ModelSerializer):
     class Meta:
         model = devices
         fields = ["name" , "registrationNumber" , "deviceType" , "chassisNumber"]
+
+
+
+
+class ImportShapeFileSerializer(serializers.Serializer):
+    shape_file = serializers.FileField()
+    name = serializers.CharField(max_length=255 , required=True )
