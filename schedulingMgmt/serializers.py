@@ -30,3 +30,9 @@ class LivedeviceDetailsSerialiser(serializers.ModelSerializer):
 class ImportShapeFileSerializer(serializers.Serializer):
     shape_file = serializers.FileField()
     name = serializers.CharField(max_length=255 , required=True )
+
+
+
+class GetChargersListSerializer(serializers.Serializer):
+    choice_list = [('Day' , 'Day'), ('Night' , 'Night'), ("Total" , "Total"),]
+    choice = serializers.ChoiceField(choices =  choice_list,required = True)

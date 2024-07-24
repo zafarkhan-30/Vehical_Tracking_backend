@@ -63,35 +63,39 @@ class ITMS:
 
     def get_buses_detail_list(self , date = None):
             
-        self.cursor.execute(f'''
-                            SELECT mtn.BusInformationId, mtn.BusType, mtn.BusCode, mtn.VehicleNumber,mtn.ChasisNumber,os.SchedulingDate,
+        # self.cursor.execute(f'''
+        #                     SELECT mtn.BusInformationId, mtn.BusType, mtn.BusCode, mtn.VehicleNumber,mtn.ChasisNumber,os.SchedulingDate,
                             
-                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartSOC ELSE NULL END) AS MorningStartSOC,
-                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndSOC ELSE NULL END) AS MorningEndSOC,
-                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartODO ELSE NULL END) AS MorningStartODO,
-                            MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndODO ELSE NULL END) AS MorningEndODO,
+        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartSOC ELSE NULL END) AS MorningStartSOC,
+        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndSOC ELSE NULL END) AS MorningEndSOC,
+        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartODO ELSE NULL END) AS MorningStartODO,
+        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndODO ELSE NULL END) AS MorningEndODO,
                             
-                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartSOC ELSE NULL END) AS EveningStartSOC,
-                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndSOC ELSE NULL END) AS EveningEndSOC,
-                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartODO ELSE NULL END) AS EveningStartODO,
-                            MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndODO ELSE NULL END) AS EveningEndODO
+        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartSOC ELSE NULL END) AS EveningStartSOC,
+        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndSOC ELSE NULL END) AS EveningEndSOC,
+        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartODO ELSE NULL END) AS EveningStartODO,
+        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndODO ELSE NULL END) AS EveningEndODO
+        #                     FROM 
+        #                         MTN_BusInformation mtn
+        #                     JOIN 
+        #                         OPR_SchedulingDetails osd ON mtn.BusInformationId = osd.BusInformationId
+        #                     JOIN 
+        #                         OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+        #                     WHERE 
+        #                         osd.IsDelete = 0  
+        #                         AND (os.IsDelete = 0 OR os.IsDelete IS NULL) 
+        #                         AND os.SchedulingDate = '{date}'
+        #                     GROUP BY 
+        #                         mtn.BusInformationId, mtn.CompanyId, mtn.BranchId, mtn.VehicleNumber,mtn.ChasisNumber,
+        #                         mtn.VehicleType, mtn.BusType, mtn.BusCode,os.SchedulingDate
+        #                     ORDER BY 
+        #                         mtn.BusInformationId;''')
+        
 
-                            FROM 
-                                MTN_BusInformation mtn
-                            JOIN 
-                                OPR_SchedulingDetails osd ON mtn.BusInformationId = osd.BusInformationId
-                            JOIN 
-                                OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
-                            WHERE 
-                                osd.IsDelete = 0  
-                                AND (os.IsDelete = 0 OR os.IsDelete IS NULL) 
-                                AND os.SchedulingDate = '{date}'
-                            GROUP BY 
-                                mtn.BusInformationId, mtn.CompanyId, mtn.BranchId, mtn.VehicleNumber,mtn.ChasisNumber,
-                                mtn.VehicleType, mtn.BusType, mtn.BusCode,os.SchedulingDate
-                            ORDER BY 
-                                mtn.BusInformationId;''')
-            
+        self.cursor.execute('''
+
+                        
+                            ''')
         result = self.cursor.fetchall()
         return [{'id' : row.BusInformationId, 'BusCode': row.BusCode, 'VehicleNumber': row.VehicleNumber , 
                  'SchedulingDate' : row.SchedulingDate , 
@@ -102,7 +106,25 @@ class ITMS:
                  } for row in result]
 
 
-    def get_charger_detail_list(self):
+    def get_charger_detail_list(self , choice):
+
+        
+        if choice == 'Day':
+            time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
+        elif choice == 'Night':
+            time_condition = """
+                AND (
+                    (CONVERT(TIME, bc.StartTime) BETWEEN '22:00:00' AND '23:59:59') OR
+                    (CONVERT(TIME, bc.StartTime) BETWEEN '00:00:00' AND '05:59:59') OR
+                    (CONVERT(TIME, DATEADD(DAY, -1, bc.StartTime)) BETWEEN '22:00:00' AND '23:59:59') OR
+                    (CONVERT(TIME, DATEADD(DAY, 1, bc.StartTime)) BETWEEN '00:00:00' AND '05:59:59')
+                )
+                """
+        elif choice == 'Total':
+            time_condition = ""
+            
+
+
         self.cursor.execute(f'''
                         SELECT 
                         cm.ChargerMasterId,
@@ -134,6 +156,7 @@ class ITMS:
                         MTN_ChargerMaster cm ON bc.ChargerMasterId = cm.ChargerMasterId
                     WHERE 
                         bc.ChargingDate = (SELECT MAX(ChargingDate) FROM MTN_BusCharging WHERE ChargerMasterId = cm.ChargerMasterId) AND cm.CompanyId = '{self.company_id}'
+                        {time_condition}
                     GROUP BY 
                         cm.ChargerMasterId, 
                         cm.ChargerNumber, 
@@ -146,8 +169,10 @@ class ITMS:
         
         query = self.cursor.fetchall()
         query_result = [{
-             "ChargerNumber" : row.ChargerNumber , 
-             "Status" : row.Status,
+            "ChargerNumber" : row.ChargerNumber , 
+            'CPU_name' : 'Klick-Watt' , 
+            'Charger_name'  : 'Shuzlon Energy' , 
+            "Status" : row.Status,
             'Latest_data': {
                 "date" : row.LastChargingDate ,
                 'BusesCharged' : row.TotalBusesChargedToday,
@@ -233,11 +258,7 @@ class ITMS:
         return round(distance_km)
 
 
-
-
-
 class Vehicletracking:
-
     def get_live_bus_details(all_devices):
         data_list = []
         if all_devices:

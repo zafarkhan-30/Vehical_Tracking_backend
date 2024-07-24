@@ -9,6 +9,7 @@ from rest_framework import status
 from database.models import *
 from rest_framework.parsers import MultiPartParser
 from VehicalTracking import settings
+from vehicle.utils import format_error_message , error_simplifier
 
 
 
@@ -88,6 +89,7 @@ class GetBussesList(GenericAPIView):
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         itms = ITMS(cursor , user_group)
+        distance = itms.get_distance_km()
         if date:
             buses_list = itms.get_buses_detail_list(date)
         else:
@@ -103,6 +105,7 @@ class GetBussesList(GenericAPIView):
             {
                 "status": "success",
                 "data": {
+                    
                     'buses_list' : buses_list
             }
             } , status= status.HTTP_200_OK
@@ -110,35 +113,51 @@ class GetBussesList(GenericAPIView):
 
 
 class GetChargersList(GenericAPIView):
-    serializer_class = None
+    
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
+    parser_classes = [MultiPartParser]
+    serializer_class = GetChargersListSerializer
 
     def get_queryset(self , user_group):
         queryset = devices.objects.filter(name__icontains=user_group)  
         return queryset
     
     def get(self, request, *args, **kwargs):
-        user_group = str(request.user.groups.first())
-        try:
-            cursor = get_db_cursor()
-        except Exception as e:
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            choice = serializer.validated_data.get('choice')
+            user_group = str(request.user.groups.first())
+            try:
+                cursor = get_db_cursor()
+            except Exception as e:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            itms = ITMS(cursor , user_group)
+        
+            Charger_list = itms.get_charger_detail_list(choice)
             return Response(
                 {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    "status": "success",
+                    "data": {
+                        'Charger_list' : Charger_list
+                }
+                } , status= status.HTTP_200_OK
             )
-        itms = ITMS(cursor , user_group)
-     
-        Charger_list = itms.get_charger_detail_list()
-        return Response(
-            {
-                "status": "success",
-                "data": {
-                    'Charger_list' : Charger_list
-            }
-            } , status= status.HTTP_200_OK
-        )
+        else:
+            
+            error_message = error_simplifier(serializer.errors)
+            
+            return Response({
+                "status": "error",
+                "message": error_message} ,
+                status=status.HTTP_400_BAD_REQUEST)
+    
+
+
 
 class GetdashboardCountView(GenericAPIView):
     serializer_class = GetTotalTripCountSerilizsers
