@@ -158,8 +158,7 @@ class ITMS:
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 'BusInformationId' : row.BusInformationId , 
                     'BusCode': row.BusCode , 'Status' : row.Status , 'TotalKmRunDay' : round(row.TotalKmRunToday),
-                    "SOC" : 50,
-                    "Charging_cycle": 0,
+                    "Charging_cycle": random.randint(0 , 5),
                     'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                     'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
                     'TotalKm' : round(row.LastODO)  } for row in result]
