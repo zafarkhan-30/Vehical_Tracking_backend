@@ -129,6 +129,8 @@ class ITMS:
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 'BusInformationId' : row.BusInformationId , 
                     'BusCode': row.BusCode , 'Status' : row.Status , 'TotalKmRunDay' : round(row.TotalKmRunToday),
+                    "SOC" : 50,
+                    "Charging_cycle": 0,
                     'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                     'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
                     'TotalKm' : round(row.LastODO)  } for row in result]
@@ -178,6 +180,61 @@ class ITMS:
                 ''')    
 
         
+        # if choice == 'Day':
+        #     time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
+        # elif choice == 'Night':
+        #     time_condition = """
+        #         AND (
+        #             (CONVERT(TIME, bc.StartTime) BETWEEN '22:00:00' AND '23:59:59') OR
+        #             (CONVERT(TIME, bc.StartTime) BETWEEN '00:00:00' AND '05:59:59')
+        #         )
+        #         """
+        # elif choice == 'Total':
+        #     time_condition = ""
+
+        
+        # self.cursor.execute(f'''
+        #                 SELECT 
+        #                 cm.ChargerMasterId,
+        #                 cm.ChargerNumber,
+        #                 cm.Status ,
+        #                 cm.SerialNumber,
+        #                 MAX(bc.ChargingDate) AS LastChargingDate,
+        #                 COUNT(bc.BusInformationId) AS TotalBusesChargedToday,
+        #                 SUM(bc.EnergyConsumption) AS TotalEnergyConsumedToday,
+        #                 SUM(CAST(bc.SessionTime AS int)) / 60.00 AS TotalOperationalHoursToday,
+        #                 (
+        #                     SELECT COUNT(bc2.BusInformationId)
+        #                     FROM MTN_BusCharging bc2
+        #                     WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+        #                 ) AS TotalBusesChargedTillDate,
+        #                 (
+        #                     SELECT SUM(bc2.EnergyConsumption)
+        #                     FROM MTN_BusCharging bc2
+        #                     WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+        #                 ) AS TotalEnergyConsumedTillDate,
+        #                 (
+        #                     SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
+        #                     FROM MTN_BusCharging bc2
+        #                     WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+        #                 ) AS TotalOperationalHoursTillDate
+        #             FROM 
+        #                 MTN_BusCharging bc
+        #             JOIN 
+        #                 MTN_ChargerMaster cm ON bc.ChargerMasterId = cm.ChargerMasterId
+        #             WHERE 
+        #                 bc.ChargingDate = '{date}' AND cm.CompanyId = '{self.company_id}'
+        #                 {time_condition}
+        #             GROUP BY 
+        #                 cm.ChargerMasterId, 
+        #                 cm.ChargerNumber, 
+        #                 cm.Status ,
+        #                 cm.SerialNumber
+        #             ORDER BY 
+        #                 cm.ChargerMasterId;
+
+        #                     ''')
+        
         if choice == 'Day':
             time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
         elif choice == 'Night':
@@ -189,49 +246,51 @@ class ITMS:
                 """
         elif choice == 'Total':
             time_condition = ""
+        else:
+            time_condition = ""
 
-        
+        # Define the query to get charger details
         self.cursor.execute(f'''
-                        SELECT 
-                        cm.ChargerMasterId,
-                        cm.ChargerNumber,
-                        cm.Status ,
-                        cm.SerialNumber,
-                        MAX(bc.ChargingDate) AS LastChargingDate,
-                        COUNT(bc.BusInformationId) AS TotalBusesChargedToday,
-                        SUM(bc.EnergyConsumption) AS TotalEnergyConsumedToday,
-                        SUM(CAST(bc.SessionTime AS int)) / 60.00 AS TotalOperationalHoursToday,
-                        (
-                            SELECT COUNT(bc2.BusInformationId)
-                            FROM MTN_BusCharging bc2
-                            WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-                        ) AS TotalBusesChargedTillDate,
-                        (
-                            SELECT SUM(bc2.EnergyConsumption)
-                            FROM MTN_BusCharging bc2
-                            WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-                        ) AS TotalEnergyConsumedTillDate,
-                        (
-                            SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
-                            FROM MTN_BusCharging bc2
-                            WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-                        ) AS TotalOperationalHoursTillDate
-                    FROM 
-                        MTN_BusCharging bc
-                    JOIN 
-                        MTN_ChargerMaster cm ON bc.ChargerMasterId = cm.ChargerMasterId
-                    WHERE 
-                        bc.ChargingDate = '{date}' AND cm.CompanyId = '{self.company_id}'
-                        {time_condition}
-                    GROUP BY 
-                        cm.ChargerMasterId, 
-                        cm.ChargerNumber, 
-                        cm.Status ,
-                        cm.SerialNumber
-                    ORDER BY 
-                        cm.ChargerMasterId;
-
-                            ''')
+            SELECT 
+                cm.ChargerMasterId,
+                cm.ChargerNumber,
+                cm.Status,
+                cm.SerialNumber,
+                MAX(bc.ChargingDate) AS LastChargingDate,
+                COALESCE(COUNT(bc.BusInformationId), 0) AS TotalBusesChargedToday,
+                COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumedToday,
+                COALESCE(SUM(CAST(bc.SessionTime AS int)) / 60.00, 0) AS TotalOperationalHoursToday,
+                (
+                    SELECT COUNT(bc2.BusInformationId)
+                    FROM MTN_BusCharging bc2
+                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                ) AS TotalBusesChargedTillDate,
+                (
+                    SELECT SUM(bc2.EnergyConsumption)
+                    FROM MTN_BusCharging bc2
+                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                ) AS TotalEnergyConsumedTillDate,
+                (
+                    SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
+                    FROM MTN_BusCharging bc2
+                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                ) AS TotalOperationalHoursTillDate
+            FROM 
+                MTN_ChargerMaster cm
+            LEFT JOIN 
+                MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
+                AND bc.ChargingDate = '{date}' {time_condition}
+            WHERE 
+                cm.CompanyId = '{self.company_id}'
+            GROUP BY 
+                cm.ChargerMasterId, 
+                cm.ChargerNumber, 
+                cm.Status,
+                cm.SerialNumber
+            ORDER BY 
+                cm.ChargerMasterId;
+        ''')
+        # Execute the query
         
         query = self.cursor.fetchall()
         query_result = [{
