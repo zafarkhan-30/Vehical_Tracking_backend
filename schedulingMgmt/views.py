@@ -14,30 +14,41 @@ from vehicle.utils import format_error_message , error_simplifier
 
 
 class GetRouteList(GenericAPIView):
-    serializer_class =None
+    serializer_class =GetRouteListSerializer
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
 
     def get(self, request, *args, **kwargs):
-        user_group = str(request.user.groups.first())
-        try:
-            cursor = get_db_cursor()
-        except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-        itms = ITMS(cursor, user_group)
-        RouteList = itms.get_route_list()
-        return Response(
-            {
-                "status": "success",
-                "data": {
-                    'route_list' : RouteList
-            }
-            } , status= status.HTTP_200_OK
-        )
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            date = serializer.validated_data.get('date')
+            
+            user_group = str(request.user.groups.first())
+            try:
+                cursor = get_db_cursor()
+            except Exception as e:
+                    return Response(
+                        {
+                            "status": "error",
+                            "message": str(e)
+                        }, status=status.HTTP_400_BAD_REQUEST
+                    )
+            itms = ITMS(cursor, user_group)
+            RouteList = itms.get_route_list(date)
+            return Response(
+                {
+                    "status": "success",
+                    "data": {
+                        'route_list' : RouteList
+                }
+                } , status= status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {
+                    "status": "error",
+                    "message": error_simplifier(serializer.errors)
+                }, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class GetScheduleBusesList(GenericAPIView):

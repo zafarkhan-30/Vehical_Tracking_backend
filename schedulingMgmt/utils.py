@@ -3,6 +3,7 @@ from .db_connection import  DatabaseConnection
 from database.models import MasterDeviceDetails
 from .serializers import *
 from datetime import  date
+import random
 
 db_config = {
             'server': '103.248.60.42',
@@ -43,15 +44,43 @@ class ITMS:
             return 2
         return None
 
-    def get_route_list(self):
+    def get_route_list(self , date):
         self.cursor.execute(f'''
-            SELECT RouteId, Name, Code 
-            FROM OPR_Route 
-            WHERE CompanyId = '{self.company_id}';
+           SELECT 
+            r.RouteId AS RouteId,
+            r.Name AS Name,
+            r.Code AS Code,
+            os.SchedulingDate AS Date , 
+            COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
+            COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
+            SUM(o.TotalTrip) AS TotalTrip
+            FROM 
+                OPR_Scheduling os
+            JOIN 
+                OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+            JOIN 
+                OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+            JOIN 
+                OPR_Route r ON o.RouteId = r.RouteId
+            WHERE 
+                os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}'
+            GROUP BY 
+                r.RouteId,
+                r.Name,
+                r.Code,
+                os.SchedulingDate 
+            ORDER BY 
+                r.RouteId;
         ''')
         result = self.cursor.fetchall()
         return [{'route_id': row.RouteId, 'Name': row.Name, 
-                 'Code': row.Code} for row in result]
+                 'Code': row.Code , 
+                 'date' : row.Date ,
+                 'NumberOfBuses': row.NumberOfBuses , 
+                 'NumberOfSchedules' : row.NumberOfScheduleCodes,
+                 'TotalTrip' : row.TotalTrip , 
+                 'route_length' : random.randint(0,50) # need to update route length
+                 } for row in result]
 
     def get_route_count(self):
         self.cursor.execute(f'''

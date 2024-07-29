@@ -49,3 +49,7 @@ class ChargerDetailSerializer(serializers.Serializer):
     choice = serializers.ChoiceField(choices =  choice_list,required = True)
     date = serializers.DateField(required=True)
     charger_id = serializers.IntegerField(required = True)
+
+
+class GetRouteListSerializer(serializers.Serializer):
+    date = serializers.DateField(required = True)

@@ -12,6 +12,6 @@ urlpatterns = [
 
 
 
-    # path('Import-ShapeFile/', ImportShapeFile.as_view(), ),
+    
 
 ]
