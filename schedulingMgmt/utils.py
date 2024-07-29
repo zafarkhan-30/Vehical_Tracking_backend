@@ -62,51 +62,120 @@ class ITMS:
         return self.cursor.fetchone()[0]
 
     def get_buses_detail_list(self , date = None):
-            
-        # self.cursor.execute(f'''
-        #                     SELECT mtn.BusInformationId, mtn.BusType, mtn.BusCode, mtn.VehicleNumber,mtn.ChasisNumber,os.SchedulingDate,
-                            
-        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartSOC ELSE NULL END) AS MorningStartSOC,
-        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndSOC ELSE NULL END) AS MorningEndSOC,
-        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.StartODO ELSE NULL END) AS MorningStartODO,
-        #                     MAX(CASE WHEN os.Shift = 'Morning' THEN osd.EndODO ELSE NULL END) AS MorningEndODO,
-                            
-        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartSOC ELSE NULL END) AS EveningStartSOC,
-        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndSOC ELSE NULL END) AS EveningEndSOC,
-        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.StartODO ELSE NULL END) AS EveningStartODO,
-        #                     MAX(CASE WHEN os.Shift = 'Evening' THEN osd.EndODO ELSE NULL END) AS EveningEndODO
-        #                     FROM 
-        #                         MTN_BusInformation mtn
-        #                     JOIN 
-        #                         OPR_SchedulingDetails osd ON mtn.BusInformationId = osd.BusInformationId
-        #                     JOIN 
-        #                         OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
-        #                     WHERE 
-        #                         osd.IsDelete = 0  
-        #                         AND (os.IsDelete = 0 OR os.IsDelete IS NULL) 
-        #                         AND os.SchedulingDate = '{date}'
-        #                     GROUP BY 
-        #                         mtn.BusInformationId, mtn.CompanyId, mtn.BranchId, mtn.VehicleNumber,mtn.ChasisNumber,
-        #                         mtn.VehicleType, mtn.BusType, mtn.BusCode,os.SchedulingDate
-        #                     ORDER BY 
-        #                         mtn.BusInformationId;''')
+        to_get_the_status= self.cursor.execute(f'''
+                        SELECT 
+                        mtn.BusInformationId,
+                        mtn.BusCode,
+                        mtn.VehicleNumber,
+                        MAX(osd.SchedulingDate) AS LatestSchedulingDate,
+                        MAX(osd.StartODO) AS StartODO,
+                        MAX(osd.EndODO) AS EndODO,
+                        COALESCE(MAX(osd.EndODO) - MAX(osd.StartODO), 0) AS TotalKmRunToday,
+                        CASE WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
+                            ELSE 'Not Scheduled'
+                        END AS Status,
+                        COALESCE(lastOdo.EndODO, 0) AS LastODO,
+                        COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumed,
+                        COALESCE(SUM(CASE 
+                            WHEN bc.ChargingDate = '2024-07-22' THEN bc.EnergyConsumption 
+                            ELSE 0 
+                        END), 0) AS TodayEnergyConsumption
+                    FROM 
+                        MTN_BusInformation mtn
+                    LEFT JOIN 
+                        (
+                            SELECT 
+                                osd.BusInformationId,
+                                osd.SchedulingId,
+                                osd.StartODO,
+                                osd.EndODO,
+                                os.SchedulingDate
+                            FROM 
+                                OPR_SchedulingDetails osd
+                            JOIN 
+                                OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+                            WHERE 
+                                os.SchedulingDate = '2024-07-22' 
+                                AND osd.IsDelete = 0
+                                AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
+                        ) osd ON mtn.BusInformationId = osd.BusInformationId
+                    LEFT JOIN 
+                        (
+                            SELECT 
+                                BusInformationId, 
+                                MAX(EndODO) AS EndODO
+                            FROM 
+                                OPR_SchedulingDetails
+                            WHERE 
+                                IsDelete = 0
+                            GROUP BY 
+                                BusInformationId
+                        ) lastOdo ON mtn.BusInformationId = lastOdo.BusInformationId
+                    LEFT JOIN 
+                        MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
+                    WHERE 
+                        mtn.CompanyId = 1
+                    GROUP BY 
+                        mtn.BusInformationId,
+                        mtn.BusCode,
+                        mtn.VehicleNumber,
+                        lastOdo.EndODO
+                    ORDER BY 
+                        mtn.BusInformationId;
+
+                    ''')
         
+        result = to_get_the_status.fetchall()
+        
+        query_result =  [{'VehicleNumber': row.VehicleNumber , 'BusInformationId' : row.BusInformationId , 
+                    'BusCode': row.BusCode , 'Status' : row.Status , 'TotalKmRunDay' : round(row.TotalKmRunToday),
+                    'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
+                    'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
+                    'TotalKm' : round(row.LastODO)  } for row in result]
+        return query_result
 
-        self.cursor.execute('''
 
-                        
-                            ''')
-        result = self.cursor.fetchall()
-        return [{'id' : row.BusInformationId, 'BusCode': row.BusCode, 'VehicleNumber': row.VehicleNumber , 
-                 'SchedulingDate' : row.SchedulingDate , 
-                 'Morning_shift' : {'StartSOC' : row.MorningStartSOC , 'EndSOC' : row.MorningEndSOC ,
-                                     'StartODO' : row.MorningStartODO , 'EndODO' : row.MorningEndODO },
-                  'Evening_shift': {'StartSOC' :row.EveningStartSOC, 'EndSOC' : row.EveningEndSOC , 
-                                    'StartODO' : row.EveningStartODO , 'EndODO' : row.EveningEndODO}
-                 } for row in result]
 
 
     def get_charger_detail_list(self , choice):
+        self.cursor.execute(f'''
+                    SELECT 
+                mtn.BusInformationId,
+                mtn.BusCode,
+                MAX(osd.SchedulingDate) AS LatestSchedulingDate,
+                CASE 
+                    WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
+                    ELSE 'Not Scheduled'
+                END AS Status
+            --    MAX(osd.StartODO) AS StartODO,
+            --    MAX(osd.EndODO) AS EndODO,
+            --    COALESCE(MAX(osd.EndODO) - MIN(osd.StartODO), 0) AS KilometersRunToday,
+                
+            FROM 
+                MTN_BusInformation mtn
+            LEFT JOIN 
+                (
+                    SELECT 
+                        osd.BusInformationId,
+                        osd.SchedulingId,
+                        osd.StartODO,
+                        osd.EndODO,
+                        os.SchedulingDate
+                    FROM 
+                        OPR_SchedulingDetails osd
+                    JOIN 
+                        OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+                    WHERE 
+                        os.SchedulingDate = '2024-07-22' 
+                        AND osd.IsDelete = 0
+                        AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
+                ) osd ON mtn.BusInformationId = osd.BusInformationId WHERE  mtn.CompanyId = 1
+            GROUP BY 
+                mtn.BusInformationId,
+                mtn.BusCode
+            ORDER BY 
+                mtn.BusInformationId;
+                ''')    
 
         
         if choice == 'Day':
@@ -122,9 +191,6 @@ class ITMS:
                 """
         elif choice == 'Total':
             time_condition = ""
-            
-
-
         self.cursor.execute(f'''
                         SELECT 
                         cm.ChargerMasterId,
@@ -203,7 +269,7 @@ class ITMS:
         result = self.cursor.fetchall()
         buses_list = [{'RouteId': row.RouteId , 'BusInformationId' : row.BusInformationId , 
                     'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
-        return buses_list
+        return buses_list 
     
 
 

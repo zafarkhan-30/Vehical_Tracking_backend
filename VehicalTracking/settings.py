@@ -106,15 +106,6 @@ CHANNEL_LAYERS = {
 }
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.contrib.gis.db.backends.postgis',
-    #     'NAME': 'VehicalTracking',
-    #     'USER':'postgres',
-    #     'PASSWORD': 'PmAyaIhGmVVUtW22TNgh',
-    #     'HOST': 'vehicaltracking.c3isgu44krjo.ap-south-1.rds.amazonaws.com',
-    #     'PORT': '5432',
-    # },
-
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': env("PROD_DATABASE_NAME"),

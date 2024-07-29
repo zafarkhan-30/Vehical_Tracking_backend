@@ -98,7 +98,16 @@ class GetRouteNo15BusStopsSerializer(GeoFeatureModelSerializer):
         geo_field = "geom"
 
 class GetRoute15Serializer(GeoFeatureModelSerializer):
+
     class Meta:
         model = RouteNo15
         fields = ("name" ,)
+        geo_field = "geom"
+
+
+
+class GetChargingStationSerializer(GeoFeatureModelSerializer):
+    class Meta:
+        model = Chargingsation
+        fields = ('name',)
         geo_field = "geom"

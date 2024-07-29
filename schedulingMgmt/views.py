@@ -22,12 +22,12 @@ class GetRouteList(GenericAPIView):
         try:
             cursor = get_db_cursor()
         except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
         itms = ITMS(cursor, user_group)
         RouteList = itms.get_route_list()
         return Response(
@@ -48,12 +48,12 @@ class GetScheduleBusesList(GenericAPIView):
         try:
             cursor = get_db_cursor()
         except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
         itms = ITMS(cursor , user_group)
         Buses_list = itms.Get_Schedule_Buses_List(scheduling_date ,route_id)
 
@@ -82,12 +82,12 @@ class GetBussesList(GenericAPIView):
         try:
             cursor = get_db_cursor()
         except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
         itms = ITMS(cursor , user_group)
         distance = itms.get_distance_km()
         if date:
@@ -134,7 +134,7 @@ class GetChargersList(GenericAPIView):
                     {
                         "status": "error",
                         "message": str(e)
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    }, status=status.HTTP_400_BAD_REQUEST
                 )
             itms = ITMS(cursor , user_group)
         
@@ -172,12 +172,12 @@ class GetdashboardCountView(GenericAPIView):
         try:
             cursor = get_db_cursor()
         except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
         itms = ITMS(cursor , user_group)
 
         trip_count = itms.get_trip_count(vehicalNumber,start_date,end_date )

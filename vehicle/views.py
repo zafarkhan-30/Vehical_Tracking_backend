@@ -418,3 +418,14 @@ class GetRouteNo15View(generics.GenericAPIView):
                             'data': data},
                             status= status.HTTP_200_OK)
 
+class GetChargingStationView(generics.GenericAPIView):
+    serializer_class = GetChargingStationSerializer
+
+    def get( self, request):
+
+        route = Chargingsation.objects.all()
+        data = self.get_serializer(route , many = True).data
+        return Response({'status': 'success',
+                            'message' : 'data was successfully fetched',
+                            'data': data},
+                            status= status.HTTP_200_OK)

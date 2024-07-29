@@ -20,6 +20,7 @@ urlpatterns = [
     path('Get-NoidaExten-To-Incedointellect-Stops', GetNoidaExtenToIncedointellectStopsView.as_view(),  ),
     path('Get-RouteNo15', GetRouteNo15View.as_view(),  ),
     path('Get-RouteNo15-BusStops', GetRouteNo15BusStopsView.as_view(),  ),
+    path('Get-Charging-Station', GetChargingStationView.as_view(),  ),
 
     
 

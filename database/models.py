@@ -157,3 +157,24 @@ class RouteNo15BusStops(models.Model):
     class Meta:
         managed = False
         db_table = 'route no_15_bus stops'
+
+
+
+class Chargingsation(models.Model):
+    gid = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=254, blank=True, null=True)
+    descriptio = models.CharField(max_length=254, blank=True, null=True)
+    timestamp = models.CharField(max_length=24, blank=True, null=True)
+    begin = models.CharField(max_length=24, blank=True, null=True)
+    end = models.CharField(max_length=24, blank=True, null=True)
+    altitudemo = models.CharField(max_length=254, blank=True, null=True)
+    tessellate = models.FloatField(blank=True, null=True)
+    extrude = models.FloatField(blank=True, null=True)
+    visibility = models.FloatField(blank=True, null=True)
+    draworder = models.FloatField(blank=True, null=True)
+    icon = models.CharField(max_length=254, blank=True, null=True)
+    geom = models.PointField(dim=4, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'chargingSation'
