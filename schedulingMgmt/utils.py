@@ -77,7 +77,7 @@ class ITMS:
                         COALESCE(lastOdo.EndODO, 0) AS LastODO,
                         COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumed,
                         COALESCE(SUM(CASE 
-                            WHEN bc.ChargingDate = '2024-07-22' THEN bc.EnergyConsumption 
+                            WHEN bc.ChargingDate = '{date}' THEN bc.EnergyConsumption 
                             ELSE 0 
                         END), 0) AS TodayEnergyConsumption
                     FROM 
@@ -95,7 +95,7 @@ class ITMS:
                             JOIN 
                                 OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
                             WHERE 
-                                os.SchedulingDate = '2024-07-22' 
+                                os.SchedulingDate = '{date}' 
                                 AND osd.IsDelete = 0
                                 AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
                         ) osd ON mtn.BusInformationId = osd.BusInformationId
