@@ -43,10 +43,12 @@ class GetRouteList(GenericAPIView):
                 } , status= status.HTTP_200_OK
             )
         else:
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
             return Response(
                 {
                     "status": "error",
-                    "message": error_simplifier(serializer.errors)
+                    "message": error_message
                 }, status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -118,11 +120,14 @@ class GetBussesList(GenericAPIView):
                 } , status= status.HTTP_200_OK
             )
         else:
-             return Response(
-                  {
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
+            return Response(
+                {
                     "status": "error",
-                    "message": error_simplifier(serializer.errors),
-                },status=status.HTTP_400_BAD_REQUEST)
+                    "message": error_message
+                }, status=status.HTTP_400_BAD_REQUEST
+            )
 
 class GetChargersList(GenericAPIView):
     
@@ -160,12 +165,14 @@ class GetChargersList(GenericAPIView):
             )
         else:
             
-            error_message = error_simplifier(serializer.errors)
-            
-            return Response({
-                "status": "error",
-                "message": error_message} ,
-                status=status.HTTP_400_BAD_REQUEST)
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
+            return Response(
+                {
+                    "status": "error",
+                    "message": error_message
+                }, status=status.HTTP_400_BAD_REQUEST
+            )
     
 
 
@@ -192,7 +199,6 @@ class GetChargerDetail(GenericAPIView):
                     }, status=status.HTTP_400_BAD_REQUEST
                 )
             itms = ITMS(cursor , user_group)
-        
             Charger_list = itms.get_charger_Details(choice, date , charger_id)
             return Response(
                 {
