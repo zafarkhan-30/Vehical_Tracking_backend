@@ -126,6 +126,7 @@ class GetChargersList(GenericAPIView):
         serializer = self.get_serializer(data = request.data)
         if serializer.is_valid():
             choice = serializer.validated_data.get('choice')
+            date = serializer.validated_data.get('date')
             user_group = str(request.user.groups.first())
             try:
                 cursor = get_db_cursor()
@@ -138,7 +139,7 @@ class GetChargersList(GenericAPIView):
                 )
             itms = ITMS(cursor , user_group)
         
-            Charger_list = itms.get_charger_detail_list(choice)
+            Charger_list = itms.get_charger_detail_list(choice, date)
             return Response(
                 {
                     "status": "success",

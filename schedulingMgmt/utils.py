@@ -137,7 +137,7 @@ class ITMS:
 
 
 
-    def get_charger_detail_list(self , choice):
+    def get_charger_detail_list(self , choice , date= None):
         self.cursor.execute(f'''
                     SELECT 
                 mtn.BusInformationId,
@@ -184,13 +184,13 @@ class ITMS:
             time_condition = """
                 AND (
                     (CONVERT(TIME, bc.StartTime) BETWEEN '22:00:00' AND '23:59:59') OR
-                    (CONVERT(TIME, bc.StartTime) BETWEEN '00:00:00' AND '05:59:59') OR
-                    (CONVERT(TIME, DATEADD(DAY, -1, bc.StartTime)) BETWEEN '22:00:00' AND '23:59:59') OR
-                    (CONVERT(TIME, DATEADD(DAY, 1, bc.StartTime)) BETWEEN '00:00:00' AND '05:59:59')
+                    (CONVERT(TIME, bc.StartTime) BETWEEN '00:00:00' AND '05:59:59')
                 )
                 """
         elif choice == 'Total':
             time_condition = ""
+
+        
         self.cursor.execute(f'''
                         SELECT 
                         cm.ChargerMasterId,
@@ -221,7 +221,7 @@ class ITMS:
                     JOIN 
                         MTN_ChargerMaster cm ON bc.ChargerMasterId = cm.ChargerMasterId
                     WHERE 
-                        bc.ChargingDate = (SELECT MAX(ChargingDate) FROM MTN_BusCharging WHERE ChargerMasterId = cm.ChargerMasterId) AND cm.CompanyId = '{self.company_id}'
+                        bc.ChargingDate = '{date}' AND cm.CompanyId = '{self.company_id}'
                         {time_condition}
                     GROUP BY 
                         cm.ChargerMasterId, 
