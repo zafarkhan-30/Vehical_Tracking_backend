@@ -119,9 +119,7 @@ class GetChargersList(GenericAPIView):
     parser_classes = [MultiPartParser]
     serializer_class = GetChargersListSerializer
 
-    def get_queryset(self , user_group):
-        queryset = devices.objects.filter(name__icontains=user_group)  
-        return queryset
+    
     
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(data = request.data)
@@ -160,10 +158,88 @@ class GetChargersList(GenericAPIView):
     
 
 
+class GetChargerDetail(GenericAPIView):
+    serializer_class = ChargerDetailSerializer
+    permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
+    parser_classes = [MultiPartParser]
+
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            choice = serializer.validated_data.get('choice')
+            date = serializer.validated_data.get('date')
+            charger_id = serializer.validated_data.get('charger_id')
+            user_group = str(request.user.groups.first())
+            try:
+                cursor = get_db_cursor()
+            except Exception as e:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
+            itms = ITMS(cursor , user_group)
+        
+            Charger_list = itms.get_charger_Details(choice, date , charger_id)
+            return Response(
+                {
+                    "status": "success",
+                    "data": {
+                        'Charger_list' : Charger_list
+                }
+                } , status= status.HTTP_200_OK
+            )
+        else:
+            
+            error_message = error_simplifier(serializer.errors)
+            
+            return Response({
+                "status": "error",
+                "message": error_message} ,
+                status=status.HTTP_400_BAD_REQUEST)
+
 
 class GetdashboardCountView(GenericAPIView):
     serializer_class = GetTotalTripCountSerilizsers
     permission_classes = [IsAuthenticated , IsUber | IsMBMT]
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            choice = serializer.validated_data.get('choice')
+            date = serializer.validated_data.get('date')
+            charger_name = serializer.validated_data.get('charger_name')
+            user_group = str(request.user.groups.first())
+            try:
+                cursor = get_db_cursor()
+            except Exception as e:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
+            itms = ITMS(cursor , user_group)
+        
+            Charger_list = itms.get_charger_detail_list(choice, date , charger_name)
+            return Response(
+                {
+                    "status": "success",
+                    "data": {
+                        'Charger_list' : Charger_list
+                }
+                } , status= status.HTTP_200_OK
+            )
+        else:
+            
+            error_message = error_simplifier(serializer.errors)
+            
+            return Response({
+                "status": "error",
+                "message": error_message} ,
+                status=status.HTTP_400_BAD_REQUEST)
 
     def get(self ,request ):
         user_group = str(request.user.groups.first())

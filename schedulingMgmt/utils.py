@@ -140,100 +140,6 @@ class ITMS:
 
 
     def get_charger_detail_list(self , choice , date= None):
-        self.cursor.execute(f'''
-                    SELECT 
-                mtn.BusInformationId,
-                mtn.BusCode,
-                MAX(osd.SchedulingDate) AS LatestSchedulingDate,
-                CASE 
-                    WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
-                    ELSE 'Not Scheduled'
-                END AS Status
-            --    MAX(osd.StartODO) AS StartODO,
-            --    MAX(osd.EndODO) AS EndODO,
-            --    COALESCE(MAX(osd.EndODO) - MIN(osd.StartODO), 0) AS KilometersRunToday,
-                
-            FROM 
-                MTN_BusInformation mtn
-            LEFT JOIN 
-                (
-                    SELECT 
-                        osd.BusInformationId,
-                        osd.SchedulingId,
-                        osd.StartODO,
-                        osd.EndODO,
-                        os.SchedulingDate
-                    FROM 
-                        OPR_SchedulingDetails osd
-                    JOIN 
-                        OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
-                    WHERE 
-                        os.SchedulingDate = '2024-07-22' 
-                        AND osd.IsDelete = 0
-                        AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
-                ) osd ON mtn.BusInformationId = osd.BusInformationId WHERE  mtn.CompanyId = 1
-            GROUP BY 
-                mtn.BusInformationId,
-                mtn.BusCode
-            ORDER BY 
-                mtn.BusInformationId;
-                ''')    
-
-        
-        # if choice == 'Day':
-        #     time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
-        # elif choice == 'Night':
-        #     time_condition = """
-        #         AND (
-        #             (CONVERT(TIME, bc.StartTime) BETWEEN '22:00:00' AND '23:59:59') OR
-        #             (CONVERT(TIME, bc.StartTime) BETWEEN '00:00:00' AND '05:59:59')
-        #         )
-        #         """
-        # elif choice == 'Total':
-        #     time_condition = ""
-
-        
-        # self.cursor.execute(f'''
-        #                 SELECT 
-        #                 cm.ChargerMasterId,
-        #                 cm.ChargerNumber,
-        #                 cm.Status ,
-        #                 cm.SerialNumber,
-        #                 MAX(bc.ChargingDate) AS LastChargingDate,
-        #                 COUNT(bc.BusInformationId) AS TotalBusesChargedToday,
-        #                 SUM(bc.EnergyConsumption) AS TotalEnergyConsumedToday,
-        #                 SUM(CAST(bc.SessionTime AS int)) / 60.00 AS TotalOperationalHoursToday,
-        #                 (
-        #                     SELECT COUNT(bc2.BusInformationId)
-        #                     FROM MTN_BusCharging bc2
-        #                     WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-        #                 ) AS TotalBusesChargedTillDate,
-        #                 (
-        #                     SELECT SUM(bc2.EnergyConsumption)
-        #                     FROM MTN_BusCharging bc2
-        #                     WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-        #                 ) AS TotalEnergyConsumedTillDate,
-        #                 (
-        #                     SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
-        #                     FROM MTN_BusCharging bc2
-        #                     WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-        #                 ) AS TotalOperationalHoursTillDate
-        #             FROM 
-        #                 MTN_BusCharging bc
-        #             JOIN 
-        #                 MTN_ChargerMaster cm ON bc.ChargerMasterId = cm.ChargerMasterId
-        #             WHERE 
-        #                 bc.ChargingDate = '{date}' AND cm.CompanyId = '{self.company_id}'
-        #                 {time_condition}
-        #             GROUP BY 
-        #                 cm.ChargerMasterId, 
-        #                 cm.ChargerNumber, 
-        #                 cm.Status ,
-        #                 cm.SerialNumber
-        #             ORDER BY 
-        #                 cm.ChargerMasterId;
-
-        #                     ''')
         
         if choice == 'Day':
             time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
@@ -249,9 +155,8 @@ class ITMS:
         else:
             time_condition = ""
 
-        # Define the query to get charger details
         self.cursor.execute(f'''
-            SELECT 
+                SELECT 
                 cm.ChargerMasterId,
                 cm.ChargerNumber,
                 cm.Status,
@@ -290,16 +195,17 @@ class ITMS:
             ORDER BY 
                 cm.ChargerMasterId;
         ''')
-        # Execute the query
+       
         
         query = self.cursor.fetchall()
         query_result = [{
             "ChargerNumber" : row.ChargerNumber , 
+            "id" : row.ChargerMasterId,
             'CPU_name' : 'Klick-Watt' , 
             'Charger_name'  : 'Shuzlon Energy' , 
             "Status" : row.Status,
             'Latest_data': {
-                "date" : row.LastChargingDate ,
+                # "date" : row.LastChargingDate ,
                 'BusesCharged' : row.TotalBusesChargedToday,
                 'EnergyConsumed' : round(row.TotalEnergyConsumedToday),
                 'OperationalHours' : row.TotalOperationalHoursToday
@@ -311,6 +217,87 @@ class ITMS:
             }
         } for row in query]
         return query_result
+
+    def get_charger_Details(self, choice , date , charger_id):
+        if choice == 'Day':
+            time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
+        elif choice == 'Night':
+            time_condition = """
+                AND (
+                    (CONVERT(TIME, bc.StartTime) BETWEEN '22:00:00' AND '23:59:59') OR
+                    (CONVERT(TIME, bc.StartTime) BETWEEN '00:00:00' AND '05:59:59')
+                )
+                """
+        elif choice == 'Total':
+            time_condition = ""
+        else:
+            time_condition = ""
+
+        self.cursor.execute(f'''
+                SELECT 
+                cm.ChargerMasterId,
+                cm.ChargerNumber,
+                cm.Status,
+                cm.SerialNumber,
+                MAX(bc.ChargingDate) AS LastChargingDate,
+                COALESCE(COUNT(bc.BusInformationId), 0) AS TotalBusesChargedToday,
+                COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumedToday,
+                COALESCE(SUM(CAST(bc.SessionTime AS int)) / 60.00, 0) AS TotalOperationalHoursToday,
+                (
+                    SELECT COUNT(bc2.BusInformationId)
+                    FROM MTN_BusCharging bc2
+                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                ) AS TotalBusesChargedTillDate,
+                (
+                    SELECT SUM(bc2.EnergyConsumption)
+                    FROM MTN_BusCharging bc2
+                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                ) AS TotalEnergyConsumedTillDate,
+                (
+                    SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
+                    FROM MTN_BusCharging bc2
+                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                ) AS TotalOperationalHoursTillDate
+            FROM 
+                MTN_ChargerMaster cm
+            LEFT JOIN 
+                MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
+                AND bc.ChargingDate = '{date}' {time_condition}
+            WHERE 
+                cm.CompanyId = '{self.company_id}' AND bc.ChargerMasterId = {charger_id}
+            GROUP BY 
+                cm.ChargerMasterId, 
+                cm.ChargerNumber, 
+                cm.Status,
+                cm.SerialNumber
+            ORDER BY 
+                cm.ChargerMasterId;
+        ''')
+       
+        
+        query = self.cursor.fetchall()
+        query_result = [{
+            "ChargerNumber" : row.ChargerNumber , 
+            "id" : row.ChargerMasterId,
+            'CPU_name' : 'Klick-Watt' , 
+            'Charger_name'  : 'Shuzlon Energy' , 
+            "Status" : row.Status,
+            'Latest_data': {
+                # "date" : row.LastChargingDate ,
+                'BusesCharged' : row.TotalBusesChargedToday,
+                'EnergyConsumed' : round(row.TotalEnergyConsumedToday),
+                'OperationalHours' : row.TotalOperationalHoursToday
+            },
+            'Total' : {
+                'BusesCharged': row.TotalBusesChargedTillDate ,
+                'EnergyConsumed' : round(row.TotalEnergyConsumedTillDate),
+                'OperationalHours' : round(row.TotalOperationalHoursTillDate)
+            }
+        } for row in query]
+        return query_result
+
+
+
 
 
 
