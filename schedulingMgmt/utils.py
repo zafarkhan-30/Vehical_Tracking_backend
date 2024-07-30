@@ -108,7 +108,10 @@ class ITMS:
                         COALESCE(SUM(CASE 
                             WHEN bc.ChargingDate = '{date}' THEN bc.EnergyConsumption 
                             ELSE 0 
-                        END), 0) AS TodayEnergyConsumption
+                        END), 0) AS TodayEnergyConsumption,
+                        SUM(CASE 
+	                    WHEN bc.EndSOC - bc.StartSOC > 0 THEN bc.EndSOC - bc.StartSOC 
+                            ELSE 0 END) / 100.0 AS ChargingCycles
                     FROM 
                         MTN_BusInformation mtn
                     LEFT JOIN 
@@ -158,13 +161,11 @@ class ITMS:
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 'BusInformationId' : row.BusInformationId , 
                     'BusCode': row.BusCode , 'Status' : row.Status , 'TotalKmRunDay' : round(row.TotalKmRunToday),
-                    "Charging_cycle": random.randint(0 , 5),
+                    "Charging_cycle": round(row.ChargingCycles),
                     'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                     'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
                     'TotalKm' : round(row.LastODO)  } for row in result]
         return query_result
-
-
 
 
     def get_charger_detail_list(self , choice , date= None):
@@ -326,9 +327,6 @@ class ITMS:
 
 
 
-
-
-
     def Get_Schedule_Buses_List(self , scheduling_date = None , route_id= None):
 
         self.cursor.execute(f'''
@@ -351,19 +349,35 @@ class ITMS:
         self.cursor.execute(f'''
             SELECT COUNT(*)
             FROM MTN_BusInformation
-            WHERE CompanyId = '{self.company_id}';
+            WHERE CompanyId = '{self.company_id}' AND Status = 'Running';
         ''')
         return self.cursor.fetchone()[0]
 
+    def get_Operational_hours(self):
+        self.cursor.execute(f'''
+           SELECT 
+            SUM(DATEDIFF(MINUTE, TRY_CAST(st.StartTime AS TIME), TRY_CAST(st.EndTime AS TIME))) / 60.00 AS TotalOperationalHours
+            FROM 
+                OPR_ScheduleTrip st''')
+
+        return round(self.cursor.fetchone()[0]) 
 
     def get_charger_count(self):
         self.cursor.execute(f'''
-                        SELECT COUNT(*) as ChargerCount
+                        SELECT 
+                            COUNT(*) as ChargerCount
                         FROM MTN_ChargerMaster
                         WHERE CompanyId = '{self.company_id}';
                         ''')
         
         return self.cursor.fetchone()[0]
+    
+    def get_charging_hours(self):
+        self.cursor.execute(f'''
+            SELECT SUM(CAST(SessionTime AS int)) / 60.00 as TotalChargingHours
+            FROM MTN_BusCharging ;
+        ''')
+        return round(self.cursor.fetchone()[0])
     
 
     def get_trip_count(self, vehicle_number=None, start_date=None, end_date=None):

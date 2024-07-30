@@ -222,41 +222,41 @@ class GetdashboardCountView(GenericAPIView):
     serializer_class = GetTotalTripCountSerilizsers
     permission_classes = [IsAuthenticated , IsUber | IsMBMT]
 
-    def get(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data = request.data)
-        if serializer.is_valid():
-            choice = serializer.validated_data.get('choice')
-            date = serializer.validated_data.get('date')
-            charger_name = serializer.validated_data.get('charger_name')
-            user_group = str(request.user.groups.first())
-            try:
-                cursor = get_db_cursor()
-            except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-            itms = ITMS(cursor , user_group)
+    # def get(self, request, *args, **kwargs):
+        # serializer = self.get_serializer(data = request.data)
+        # if serializer.is_valid():
+        #     choice = serializer.validated_data.get('choice')
+        #     date = serializer.validated_data.get('date')
+        #     charger_name = serializer.validated_data.get('charger_name')
+        #     user_group = str(request.user.groups.first())
+        #     try:
+        #         cursor = get_db_cursor()
+        #     except Exception as e:
+        #         return Response(
+        #             {
+        #                 "status": "error",
+        #                 "message": str(e)
+        #             }, status=status.HTTP_400_BAD_REQUEST
+        #         )
+        #     itms = ITMS(cursor , user_group)
         
-            Charger_list = itms.get_charger_detail_list(choice, date , charger_name)
-            return Response(
-                {
-                    "status": "success",
-                    "data": {
-                        'Charger_list' : Charger_list
-                }
-                } , status= status.HTTP_200_OK
-            )
-        else:
+        #     Charger_list = itms.get_charger_detail_list(choice, date , charger_name)
+        #     return Response(
+        #         {
+        #             "status": "success",
+        #             "data": {
+        #                 'Charger_list' : Charger_list
+        #         }
+        #         } , status= status.HTTP_200_OK
+        #     )
+        # else:
             
-            error_message = error_simplifier(serializer.errors)
+        #     error_message = error_simplifier(serializer.errors)
             
-            return Response({
-                "status": "error",
-                "message": error_message} ,
-                status=status.HTTP_400_BAD_REQUEST)
+        #     return Response({
+        #         "status": "error",
+        #         "message": error_message} ,
+        #         status=status.HTTP_400_BAD_REQUEST)
 
     def get(self ,request ):
         user_group = str(request.user.groups.first())
@@ -274,23 +274,29 @@ class GetdashboardCountView(GenericAPIView):
                     }, status=status.HTTP_400_BAD_REQUEST
                 )
         itms = ITMS(cursor , user_group)
-
+        # bus_deployed = itms.get_buses_count()
         trip_count = itms.get_trip_count(vehicalNumber,start_date,end_date )
         distance = itms.get_distance_km(vehicalNumber,start_date,end_date )
         route_count = itms.get_route_count()
         buses_count = itms.get_buses_count()
         Charger_count = itms.get_charger_count()
-
+        charging_hours = itms.get_charging_hours()
+        OperationalHour = itms.get_Operational_hours()
 
         return Response(
             {
                 "status": "success",
                 "data": {
+
+                    # "bus_deployed" : bus_deployed,
                     "route_count": route_count,
                     "Bus_count" : buses_count,
+                    "Chargers": Charger_count,
+
+                    "OperationalHour": OperationalHour ,
                     "TotalTrips": trip_count,
                     "DistanceBytrip_in_Km": distance,
-                    "Chargers": Charger_count,
+                    "charging_hours": charging_hours
 
                 }
             }
