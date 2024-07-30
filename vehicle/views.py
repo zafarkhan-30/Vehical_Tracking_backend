@@ -15,6 +15,7 @@ from rest_framework.parsers import MultiPartParser
 from .permissions import *
 from database.models import *
 from rest_framework.throttling import UserRateThrottle , AnonRateThrottle
+from django.db.models import Q
 
 
 class UserRegister(generics.GenericAPIView):
@@ -321,9 +322,10 @@ def get_devices_details_view(query_params=None , user_group = None):
         data_list = []
         if query_params:
             names = query_params.get('name')
-            
+                 
             for name in names:
-                devices_list = devices.objects.filter(name__icontains=name)
+                
+                devices_list = devices.objects.filter(name__iexact=name)
 
                 for device in devices_list:
                     device_details_serailizer = deviceDetailsSerialiser(device).data

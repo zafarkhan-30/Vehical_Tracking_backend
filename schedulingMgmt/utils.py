@@ -356,7 +356,7 @@ class ITMS:
     def get_Operational_hours(self):
         self.cursor.execute(f'''
            SELECT 
-            SUM(DATEDIFF(MINUTE, TRY_CAST(st.StartTime AS TIME), TRY_CAST(st.EndTime AS TIME))) / 60.00 AS TotalOperationalHours
+            SUM(DATEDIFF(MINUTE, TRY_CAST(st.StartTime AS TIME), TRY_CAST(st.EndTime AS TIME)))  AS TotalOperationalHours
             FROM 
                 OPR_ScheduleTrip st''')
 
