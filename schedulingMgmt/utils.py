@@ -4,6 +4,11 @@ from database.models import MasterDeviceDetails
 from .serializers import *
 from datetime import  date
 import random
+from rest_framework.response import Response
+import pyodbc
+# from VehicalTracking.settings import ITMS_SERVER , ITMS_DRIVER, ITMS_PASSWORD , ITMS_USERNAME , ITMS_DATABASE_NAME
+# from .db_connection import DatabaseConnection
+
 
 db_config = {
             'server': '103.248.60.42',
@@ -21,7 +26,8 @@ def get_db_cursor():
         connection = db_connection.get_connection()
         return connection.cursor()
     except Exception as e:
-        raise ConnectionError(f"An error occurred: {str(e)}")
+        return Response({"status": "error", "message":"Connection error, Try again in few minutes" ,
+                         "error_message" : str(e) } , status= 400)
 
 
 class ITMS:
@@ -79,7 +85,7 @@ class ITMS:
                  'NumberOfBuses': row.NumberOfBuses , 
                  'NumberOfSchedules' : row.NumberOfScheduleCodes,
                  'TotalTrip' : row.TotalTrip , 
-                 'route_length' : random.randint(0,50) # need to update route length
+                 'route_length' : random.randint(20,50) # need to update route length
                  } for row in result]
 
     def get_route_count(self):
@@ -154,7 +160,6 @@ class ITMS:
                         lastOdo.EndODO
                     ORDER BY 
                         mtn.BusInformationId;
-
                     ''')
         
         result = to_get_the_status.fetchall()
@@ -183,7 +188,7 @@ class ITMS:
             time_condition = ""
         else:
             time_condition = ""
-
+        
         self.cursor.execute(f'''
                 SELECT 
                 cm.ChargerMasterId,
@@ -224,7 +229,7 @@ class ITMS:
             ORDER BY 
                 cm.ChargerMasterId;
         ''')
-       
+    
         
         query = self.cursor.fetchall()
         query_result = [{
@@ -246,7 +251,7 @@ class ITMS:
             }
         } for row in query]
         return query_result
-
+      
     def get_charger_Details(self, choice , date , charger_id):
         if choice == 'Day':
             time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
@@ -328,7 +333,8 @@ class ITMS:
 
 
     def Get_Schedule_Buses_List(self , scheduling_date = None , route_id= None):
-
+        # while True:
+        #     try:
         self.cursor.execute(f'''
                         SELECT o.RouteId as RouteId, osd.BusInformationId as BusInformationId , 
                         os.SchedulingDate as SchedulingDate , osd.BusCode as BusCode , o.Code as ScheduleCode
@@ -341,7 +347,16 @@ class ITMS:
         result = self.cursor.fetchall()
         buses_list = [{'RouteId': row.RouteId , 'BusInformationId' : row.BusInformationId , 
                     'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
+        
         return buses_list 
+            # except pyodbc.Error as pe:
+            #     print("Error:", pe)
+            #     if pe.args[0] == "08S01":  
+            #         try:
+            #             db_connection.close_connection()
+            #         except:
+            #             get_db_cursor()
+            #     continue
     
 
 
@@ -355,10 +370,21 @@ class ITMS:
 
     def get_Operational_hours(self):
         self.cursor.execute(f'''
-           SELECT 
-            SUM(DATEDIFF(MINUTE, TRY_CAST(st.StartTime AS TIME), TRY_CAST(st.EndTime AS TIME)))  AS TotalOperationalHours
-            FROM 
-                OPR_ScheduleTrip st''')
+            SELECT 
+            SUM( CASE 
+                WHEN TRY_CAST(StartTime AS TIME) IS NOT NULL AND TRY_CAST(EndTime AS TIME) IS NOT NULL THEN
+                    CASE 
+                        WHEN TRY_CAST(EndTime AS TIME) < TRY_CAST(StartTime AS TIME) 
+                        THEN DATEDIFF(MINUTE, 
+                                    CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), 
+                                    DATEADD(DAY, 1, CAST(TRY_CAST(EndTime AS TIME) AS DATETIME)))
+                        ELSE DATEDIFF(MINUTE, 
+                                    CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), 
+                                    CAST(TRY_CAST(EndTime AS TIME) AS DATETIME))
+                    END
+                ELSE NULL
+            END) / 60.00 AS DurationInHours
+        FROM OPR_SchedulingDetailsTrip;''')
 
         return round(self.cursor.fetchone()[0]) 
 

@@ -16,7 +16,8 @@ from .permissions import *
 from database.models import *
 from rest_framework.throttling import UserRateThrottle , AnonRateThrottle
 from django.db.models import Q
-
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -317,6 +318,11 @@ class GetDeviceParametersDetails(generics.ListAPIView):
     queryset = devices.objects.all()
 
 
+    @method_decorator(cache_page(60))
+    def dispatch(self, *args, **kwargs):
+        return super(GetDeviceParametersDetails, self).dispatch(*args, **kwargs)
+
+
 def get_devices_details_view(query_params=None , user_group = None):
     try:
         data_list = []
@@ -324,9 +330,7 @@ def get_devices_details_view(query_params=None , user_group = None):
             names = query_params.get('name')
                  
             for name in names:
-                
                 devices_list = devices.objects.filter(name__iexact=name)
-
                 for device in devices_list:
                     device_details_serailizer = deviceDetailsSerialiser(device).data
                     today = date.today()
