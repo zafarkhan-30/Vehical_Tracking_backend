@@ -1,2 +1,5 @@
-.env
-.env/*
+# Ignore the virtual environment directory
+.env/
+
+# Ignore the .env file
+VehicalTracking/.env
