@@ -53,15 +53,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'rest_framework',
+    'knox',
     'rest_framework_gis',
     'database.apps.DatabaseConfig',
     'vehicle.apps.VehicleConfig',
+    
     'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
     'django_filters',
     'corsheaders',
     'django_crontab',
-    'rest_framework.authtoken',
+    # 'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -118,11 +120,18 @@ DATABASES = {
 }
 
 
+ITMS_SERVER = env("ITMS_SERVER")
+ITMS_DRIVER = env("ITMS_DRIVER")
+ITMS_PASSWORD =env("ITMS_PASSWORD")
+ITMS_USERNAME =env("ITMS_USERNAME")
+ITMS_DATABASE_NAME = env("ITMS_DATABASE_NAME")
+
+
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  
+     'knox.auth.TokenAuthentication', 
     ],
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.UserRateThrottle',
@@ -204,6 +213,18 @@ CRONJOBS = [
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'jafarkhan301999@gmail.com'
-EMAIL_HOST_PASSWORD = 'rzkqbnbkvyeafyzi'
+EMAIL_HOST_USER = env("EMAIL")
+EMAIL_HOST_PASSWORD = env("PASSWORD")
 EMAIL_USE_TLS = True
+
+
+from datetime import timedelta
+from rest_framework.settings import api_settings
+REST_KNOX = {
+    # 'SECURE_HASH_ALGORITHM':'cryptography.hazmat.primitives.hashes.SHA512',
+    'AUTH_TOKEN_CHARACTER_LENGTH': 64, # By default, it is set to 64 characters (this shouldn't need changing).
+    'TOKEN_TTL': timedelta(minutes=45), # The default is 10 hours i.e., timedelta(hours=10)).
+    'USER_SERIALIZER': 'knox.serializers.UserSerializer',
+    'TOKEN_LIMIT_PER_USER': None, # By default, this option is disabled and set to None -- thus no limit.
+    'AUTO_REFRESH': False, # This defines if the token expiry time is extended by TOKEN_TTL each time the token is used.
+    'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT, }

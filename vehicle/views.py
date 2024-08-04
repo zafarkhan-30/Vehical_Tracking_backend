@@ -7,6 +7,7 @@ from .serializers import *
 from rest_framework.views import APIView
 from datetime import  date
 from django.contrib.auth import authenticate
+from knox.models import AuthToken
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import Group
@@ -60,38 +61,27 @@ class UserRegister(generics.GenericAPIView):
 
 class LoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer
-    # parser_classes = [JSONParser]
+    def post(self, request):
+        
+        serializer = LoginSerializer(data=request.data)
 
-    def post(self , request):
-        serializer = LoginSerializer(data= request.data)
         if serializer.is_valid():
-            username = serializer.data.get('username')
-            password = serializer.data.get('password')
-            
-            user = authenticate(username=username , password=password)
-            if user is not None:
-                try:
-                    token = Token.objects.create(user=user)
-                except:
-                    token = Token.objects.get(user=user)
-
+            user_data = serializer.validated_data
+            group = user_data.groups.values_list("name", flat=True)[0]
+            if serializer is not None:
+                _, token = AuthToken.objects.create(serializer.validated_data)
                 return Response({
-                    
-                                'Token':token.key,
+                                'Token':token,
                                 'status' : 'success' , 
                                 'message' : 'Login successful' ,
-                                'username': user.username,
-                                'group': str(user.groups.first()),
-                                
-                                } , 
-                                status=200)
-            else:
-                return Response({'status': 'error',
-                                'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
+                                'username': user_data.username,
+                                'group' : group, 
+                                    } , status= 200)
         else:
+            key, value =list(serializer.errors.items())[0]
+            error_message =value[0]
             return Response({'status': 'error',
-                            'message': "username or password is not valid , Please try again."} , status=status.HTTP_400_BAD_REQUEST)
-
+                            'message': error_message} , status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]

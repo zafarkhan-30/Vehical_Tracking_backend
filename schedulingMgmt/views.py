@@ -21,7 +21,6 @@ class GetRouteList(GenericAPIView):
         serializer = self.get_serializer(data = request.data)
         if serializer.is_valid():
             date = serializer.validated_data.get('date')
-            
             user_group = str(request.user.groups.first())
             try:
                 cursor = get_db_cursor()
@@ -145,7 +144,6 @@ class GetChargersList(GenericAPIView):
             user_group = str(request.user.groups.first())
             try:
                 cursor = get_db_cursor()
-                print(cursor)
             except Exception as e:
                 return Response(
                     {
@@ -156,7 +154,6 @@ class GetChargersList(GenericAPIView):
             itms = ITMS(cursor , user_group)
             try:
                 Charger_list = itms.get_charger_detail_list(choice, date)
-                print(Charger_list)
             except:
                 return Response(Charger_list , status= 400)
             return Response(
@@ -195,7 +192,6 @@ class GetChargerDetail(GenericAPIView):
             user_group = str(request.user.groups.first())
             try:
                 cursor = get_db_cursor()
-                
             except Exception as e:
                 return Response(
                     {
@@ -214,9 +210,7 @@ class GetChargerDetail(GenericAPIView):
                 } , status= status.HTTP_200_OK
             )
         else:
-            
             error_message = error_simplifier(serializer.errors)
-            
             return Response({
                 "status": "error",
                 "message": error_message} ,

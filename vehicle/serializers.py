@@ -3,6 +3,9 @@ from database.models import *
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
+from django.contrib import auth
+from django.contrib.auth import authenticate
+
 
 def get_group_choice():
 	"""
@@ -46,6 +49,40 @@ class LoginSerializer(serializers.Serializer):
     class Meta:
 		# model = CustomUser
         fields = ('username','password')
+
+
+
+class LoginSerializer(serializers.Serializer):
+	username = serializers.CharField()
+	password = serializers.CharField()
+	class Meta:
+		# model = CustomUser
+		fields = ('id','username','password')
+	def validate(self,data):
+		username = data.get('username')
+		password = data.get('password')
+
+		customuser = auth.authenticate(username=username, password=password)
+		# try:
+		# 	if not customuser:
+		# 		user = CustomUser.objects.get_by_natural_key(phoneNumber)
+		# 		if not user.is_active:
+		# 			raise serializers.ValidationError("Account is not active")
+		# except:
+		# 	raise serializers.ValidationError("Incorrect Credentials")
+		
+
+				
+
+		if data["username"] =="" or data["username"] == None:
+			msg = "Please enter username."
+			raise serializers.ValidationError(msg)
+		if data["password"] =="" or data["password"] == None:
+			msg = "Please enter password."
+			raise serializers.ValidationError(msg)
+		elif customuser and customuser.is_active:
+			return customuser
+		raise serializers.ValidationError("Incorrect Credentials")
 
 class logoutSerializer(serializers.Serializer):
     token = serializers.CharField(max_length = 255 , required =True)

@@ -6,16 +6,16 @@ from datetime import  date
 import random
 from rest_framework.response import Response
 import pyodbc
-# from VehicalTracking.settings import ITMS_SERVER , ITMS_DRIVER, ITMS_PASSWORD , ITMS_USERNAME , ITMS_DATABASE_NAME
+from VehicalTracking.settings import ITMS_SERVER , ITMS_DRIVER, ITMS_PASSWORD , ITMS_USERNAME , ITMS_DATABASE_NAME
 # from .db_connection import DatabaseConnection
 
 
 db_config = {
-            'server': '103.248.60.42',
-            'database': 'ITMS',
-            'username': 'sa',
-            'password': 'vtpl@123',
-            'driver': '{ODBC Driver 17 for SQL Server}'
+            'server': ITMS_SERVER,
+            'database': ITMS_DATABASE_NAME,
+            'username': ITMS_USERNAME,
+            'password': ITMS_PASSWORD,
+            'driver': ITMS_DRIVER
         }
 
 
@@ -333,8 +333,6 @@ class ITMS:
 
 
     def Get_Schedule_Buses_List(self , scheduling_date = None , route_id= None):
-        # while True:
-        #     try:
         self.cursor.execute(f'''
                         SELECT o.RouteId as RouteId, osd.BusInformationId as BusInformationId , 
                         os.SchedulingDate as SchedulingDate , osd.BusCode as BusCode , o.Code as ScheduleCode
@@ -349,14 +347,7 @@ class ITMS:
                     'BusCode': row.BusCode , 'ScheduleCode' : row.ScheduleCode } for row in result]
         
         return buses_list 
-            # except pyodbc.Error as pe:
-            #     print("Error:", pe)
-            #     if pe.args[0] == "08S01":  
-            #         try:
-            #             db_connection.close_connection()
-            #         except:
-            #             get_db_cursor()
-            #     continue
+         
     
 
 
