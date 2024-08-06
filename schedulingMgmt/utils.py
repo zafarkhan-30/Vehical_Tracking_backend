@@ -116,8 +116,27 @@ class ITMS:
                             ELSE 0 
                         END), 0) AS TodayEnergyConsumption,
                         SUM(CASE 
-	                    WHEN bc.EndSOC - bc.StartSOC > 0 THEN bc.EndSOC - bc.StartSOC 
-                            ELSE 0 END) / 100.0 AS ChargingCycles
+                            WHEN bc.EndSOC - bc.StartSOC > 0 THEN bc.EndSOC - bc.StartSOC 
+                            ELSE 0 
+                        END) / 100.0 AS ChargingCycles,
+                        STUFF((
+                            SELECT ', ' + o2.Code
+                            FROM OPR_Schedule o2
+                            JOIN OPR_SchedulingDetails osd2 ON o2.ScheduleId = osd2.ScheduleId
+                            JOIN OPR_Scheduling os2 ON osd2.SchedulingId = os2.SchedulingId
+                            WHERE osd2.BusInformationId = mtn.BusInformationId
+                            AND os2.SchedulingDate = '{date}'
+                            AND o2.Shift = 'Morning'
+                            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS MorningScheduleCodes,
+                        STUFF((
+                            SELECT ', ' + o2.Code
+                            FROM OPR_Schedule o2
+                            JOIN OPR_SchedulingDetails osd2 ON o2.ScheduleId = osd2.ScheduleId
+                            JOIN OPR_Scheduling os2 ON osd2.SchedulingId = os2.SchedulingId
+                            WHERE osd2.BusInformationId = mtn.BusInformationId
+                            AND os2.SchedulingDate = '{date}'
+                            AND o2.Shift = 'Evening'
+                            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS EveningScheduleCodes
                     FROM 
                         MTN_BusInformation mtn
                     LEFT JOIN 
@@ -127,7 +146,8 @@ class ITMS:
                                 osd.SchedulingId,
                                 osd.StartODO,
                                 osd.EndODO,
-                                os.SchedulingDate
+                                os.SchedulingDate,
+                                osd.ScheduleId  -- Include ScheduleId in subquery
                             FROM 
                                 OPR_SchedulingDetails osd
                             JOIN 
@@ -160,12 +180,14 @@ class ITMS:
                         lastOdo.EndODO
                     ORDER BY 
                         mtn.BusInformationId;
+
                     ''')
         
         result = to_get_the_status.fetchall()
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 'BusInformationId' : row.BusInformationId , 
-                    'BusCode': row.BusCode , 'Status' : row.Status , 'TotalKmRunDay' : round(row.TotalKmRunToday),
+                    'BusCode': row.BusCode , 'Status' : row.Status ,
+                    'MorningScheduleCodes': row.MorningScheduleCodes , 'EveningScheduleCodes':row.EveningScheduleCodes, 'TotalKmRunDay' : round(row.TotalKmRunToday),
                     "Charging_cycle": round(row.ChargingCycles),
                     'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                     'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),

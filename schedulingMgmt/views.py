@@ -84,10 +84,7 @@ class GetBussesList(GenericAPIView):
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
     parser_classes = [MultiPartParser]
 
-    def get_queryset(self , user_group):
-       
-        queryset = devices.objects.filter(name__icontains=user_group)  
-        return queryset
+
     
     def get(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
@@ -95,8 +92,6 @@ class GetBussesList(GenericAPIView):
         serializer = self.get_serializer(data = request.data)
         if serializer.is_valid():
             date = serializer.validated_data.get('date')
-            
-            
             try:
                 cursor = get_db_cursor()
             except Exception as e:
