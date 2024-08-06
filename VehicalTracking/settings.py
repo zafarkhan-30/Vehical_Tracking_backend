@@ -107,30 +107,30 @@ CHANNEL_LAYERS = {
     },
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-#         'NAME': env("PROD_DATABASE_NAME"),
-#         'USER': env("PROD_DATABASE_USER"),
-#         'PASSWORD': env("PROD_DATABASE_PASSWORD"),
-#         'HOST': env("PROD_DATABASE_HOST"),
-#         'PORT': env("PROD_DATABASE_PORT"),
-#     },
-
-# }
-
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': env("Plesk_DATABASE_NAME"),
-        'USER': env("Plesk_DATABASE_USER"),
-        'PASSWORD': env("Plesk_DATABASE_PASSWORD"),
-        'HOST': env("Plesk_DATABASE_HOST"),
-        'PORT': env("Plesk_DATABASE_PORT"),
+        'NAME': env("PROD_DATABASE_NAME"),
+        'USER': env("PROD_DATABASE_USER"),
+        'PASSWORD': env("PROD_DATABASE_PASSWORD"),
+        'HOST': env("PROD_DATABASE_HOST"),
+        'PORT': env("PROD_DATABASE_PORT"),
     },
 
 }
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("Plesk_DATABASE_NAME"),
+#         'USER': env("Plesk_DATABASE_USER"),
+#         'PASSWORD': env("Plesk_DATABASE_PASSWORD"),
+#         'HOST': env("Plesk_DATABASE_HOST"),
+#         'PORT': env("Plesk_DATABASE_PORT"),
+#     },
+
+# }
 
 
 ITMS_SERVER = env("ITMS_SERVER")
