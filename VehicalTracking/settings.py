@@ -107,14 +107,27 @@ CHANNEL_LAYERS = {
     },
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("PROD_DATABASE_NAME"),
+#         'USER': env("PROD_DATABASE_USER"),
+#         'PASSWORD': env("PROD_DATABASE_PASSWORD"),
+#         'HOST': env("PROD_DATABASE_HOST"),
+#         'PORT': env("PROD_DATABASE_PORT"),
+#     },
+
+# }
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': env("PROD_DATABASE_NAME"),
-        'USER': env("PROD_DATABASE_USER"),
-        'PASSWORD': env("PROD_DATABASE_PASSWORD"),
-        'HOST': env("PROD_DATABASE_HOST"),
-        'PORT': env("PROD_DATABASE_PORT"),
+        'NAME': env("Plesk_DATABASE_NAME"),
+        'USER': env("Plesk_DATABASE_USER"),
+        'PASSWORD': env("Plesk_DATABASE_PASSWORD"),
+        'HOST': env("Plesk_DATABASE_HOST"),
+        'PORT': env("Plesk_DATABASE_PORT"),
     },
 
 }
@@ -125,6 +138,7 @@ ITMS_DRIVER = env("ITMS_DRIVER")
 ITMS_PASSWORD =env("ITMS_PASSWORD")
 ITMS_USERNAME =env("ITMS_USERNAME")
 ITMS_DATABASE_NAME = env("ITMS_DATABASE_NAME")
+
 
 
 REST_FRAMEWORK = {
@@ -223,7 +237,7 @@ from rest_framework.settings import api_settings
 REST_KNOX = {
     # 'SECURE_HASH_ALGORITHM':'cryptography.hazmat.primitives.hashes.SHA512',
     'AUTH_TOKEN_CHARACTER_LENGTH': 64, # By default, it is set to 64 characters (this shouldn't need changing).
-    'TOKEN_TTL': timedelta(minutes=45), # The default is 10 hours i.e., timedelta(hours=10)).
+    'TOKEN_TTL': timedelta(hours=24), # The default is 10 hours i.e., timedelta(hours=10)).
     'USER_SERIALIZER': 'knox.serializers.UserSerializer',
     'TOKEN_LIMIT_PER_USER': None, # By default, this option is disabled and set to None -- thus no limit.
     'AUTO_REFRESH': False, # This defines if the token expiry time is extended by TOKEN_TTL each time the token is used.
