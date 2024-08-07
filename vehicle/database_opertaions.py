@@ -85,7 +85,7 @@ def create_master_device_details(device_instances: int, data: Dict[str, Any]):
         alert_location=alert_location,
         alert_address=alerts_details.get('address'),
         alarmType=alerts_details.get('alarmType'),
-        limit=alerts_details.get('limit'),
+        limits=alerts_details.get('limit'),
         severity=alerts_details.get('severity'),
         todayKms=todayDrive_details.get("todayKms"),
         todayMovementTime=todayDrive_details.get("todayMovementTime"),

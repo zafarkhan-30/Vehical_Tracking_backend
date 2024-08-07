@@ -50,7 +50,7 @@ class GetDevice_Data(AsyncWebsocketConsumer):
     async def fetch_data_periodically(self):
         while True:
             await self.fetch_data()
-            await asyncio.sleep(5) 
+            await asyncio.sleep(3) 
 
 
 
