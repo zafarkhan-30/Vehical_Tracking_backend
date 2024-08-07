@@ -107,17 +107,17 @@ CHANNEL_LAYERS = {
     },
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': env("PROD_DATABASE_NAME"),
-        'USER': env("PROD_DATABASE_USER"),
-        'PASSWORD': env("PROD_DATABASE_PASSWORD"),
-        'HOST': env("PROD_DATABASE_HOST"),
-        'PORT': env("PROD_DATABASE_PORT"),
-    },
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("PROD_DATABASE_NAME"),
+#         'USER': env("PROD_DATABASE_USER"),
+#         'PASSWORD': env("PROD_DATABASE_PASSWORD"),
+#         'HOST': env("PROD_DATABASE_HOST"),
+#         'PORT': env("PROD_DATABASE_PORT"),
+#     },
 
-}
+# }
 
 
 # DATABASES = {
@@ -131,6 +131,17 @@ DATABASES = {
 #     },
 
 # }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': env("LOCAL_DATABASE_NAME"),
+        'USER': env("LOCAL_DATABASE_USER"),
+        'PASSWORD': env("LOCAL_DATABASE_PASSWORD"),
+        'HOST': env("LOCAL_DATABASE_HOST"),
+        'PORT': env("LOCAL_DATABASE_PORT"),
+    },
+
+}
 
 
 ITMS_SERVER = env("ITMS_SERVER")

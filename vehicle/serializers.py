@@ -51,7 +51,6 @@ class LoginSerializer(serializers.Serializer):
         fields = ('username','password')
 
 
-
 class LoginSerializer(serializers.Serializer):
 	username = serializers.CharField()
 	password = serializers.CharField()

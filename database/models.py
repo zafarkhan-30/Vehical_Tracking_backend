@@ -62,7 +62,7 @@ class MasterDeviceDetails(models.Model):
     alert_location = models.PointField(null= True , blank= True)
     alert_address = models.CharField(max_length=1000 , blank = True , null = True)
     alarmType = models.IntegerField(null = True)
-    limit = models.IntegerField(null = True)
+    limits = models.IntegerField(null = True)
     severity = models.IntegerField(null = True)
 
     todayKms = models.IntegerField(null = True)
@@ -91,7 +91,6 @@ class MasterDeviceDetails(models.Model):
                 self.latitude = Decimal(str(self.latitude).round(2))
                 self.longitude = Decimal(str(self.longitude).round(2))
                 super().save(*args, **kwargs)
-
 
 
 
