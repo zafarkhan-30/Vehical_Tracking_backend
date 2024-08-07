@@ -120,28 +120,28 @@ DATABASES = {
 }
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': env("Plesk_DATABASE_NAME"),
-        'USER': env("Plesk_DATABASE_USER"),
-        'PASSWORD': env("Plesk_DATABASE_PASSWORD"),
-        'HOST': env("Plesk_DATABASE_HOST"),
-        'PORT': env("Plesk_DATABASE_PORT"),
-    },
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("Plesk_DATABASE_NAME"),
+#         'USER': env("Plesk_DATABASE_USER"),
+#         'PASSWORD': env("Plesk_DATABASE_PASSWORD"),
+#         'HOST': env("Plesk_DATABASE_HOST"),
+#         'PORT': env("Plesk_DATABASE_PORT"),
+#     },
 
-}
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': env("LOCAL_DATABASE_NAME"),
-        'USER': env("LOCAL_DATABASE_USER"),
-        'PASSWORD': env("LOCAL_DATABASE_PASSWORD"),
-        'HOST': env("LOCAL_DATABASE_HOST"),
-        'PORT': env("LOCAL_DATABASE_PORT"),
-    },
+# }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#         'NAME': env("LOCAL_DATABASE_NAME"),
+#         'USER': env("LOCAL_DATABASE_USER"),
+#         'PASSWORD': env("LOCAL_DATABASE_PASSWORD"),
+#         'HOST': env("LOCAL_DATABASE_HOST"),
+#         'PORT': env("LOCAL_DATABASE_PORT"),
+#     },
 
-}
+# }
 
 
 ITMS_SERVER = env("ITMS_SERVER")
