@@ -257,8 +257,8 @@ class ITMS:
         query_result = [{
             "ChargerNumber" : row.ChargerNumber , 
             "id" : row.ChargerMasterId,
-            'CPU_name' : 'Klick-Watt' , 
-            'Charger_name'  : 'Shuzlon Energy' , 
+            'CPO_name' : 'Klick-Watt' , 
+            'Charger_name'  : 'Star Charge' , 
             "Status" : row.Status,
             'Latest_data': {
                 # "date" : row.LastChargingDate ,
