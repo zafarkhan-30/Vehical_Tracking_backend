@@ -151,6 +151,12 @@ ITMS_USERNAME =env("ITMS_USERNAME")
 ITMS_DATABASE_NAME = env("ITMS_DATABASE_NAME")
 
 
+BACKUP_DATABASE_NAME=env("BACKUP_DATABASE_NAME")
+BACKUP_DATABASE_USER=env("BACKUP_DATABASE_USER")
+BACKUP_DATABASE_PASSWORD=env("BACKUP_DATABASE_PASSWORD")
+BACKUP_DATABASE_HOST=env("BACKUP_DATABASE_HOST")
+BACKUP_DATABASE_PORT=env("BACKUP_DATABASE_PORT")
+
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -231,6 +237,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CRONJOBS = [
     ('* * * * *', 'vehicle.cron_job.run_device_details_view'),
+    ('*/30 * * * *', 'vehicle.cron_job.Perform_backup'),
   
 ]
 
