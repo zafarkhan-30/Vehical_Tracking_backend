@@ -106,13 +106,17 @@ class PostMasterDeviceData(APIView):
         if response.status_code == 200:
             try:
                 devices_data = json.loads(response.content).get('data')
+                # print(devices_data)
+
                 master_data_list = []
                 for data in devices_data:
                     device_id = data.get("id")
                     device_instances = devices.objects.filter(device_id=device_id).first()
+                    
                     if device_instances:
                         master_data_list.append(create_master_device_details(device_instances , data))
-                    
+
+                print(master_data_list)    
                 master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
 
                 return Response({"message": "device data created successfully"}, status=200)
@@ -259,7 +263,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
         return Response(data_list)
     
 class ViewAmnexDeviceDetails(APIView):
-    permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
+    # permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
     throttle_classes = [UserRateThrottle , AnonRateThrottle]
     def get_queryset(self):
 
@@ -281,6 +285,8 @@ class ViewAmnexDeviceDetails(APIView):
     def get(self, request):
         data_list = []
         all_devices = self.get_queryset()
+        
+
         if all_devices:
           
             for device in all_devices:
