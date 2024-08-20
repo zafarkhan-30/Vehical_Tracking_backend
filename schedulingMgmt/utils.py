@@ -192,6 +192,7 @@ class ITMS:
                     'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                     'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
                     'TotalKm' : round(row.LastODO)  } for row in result]
+        
         return query_result
 
 

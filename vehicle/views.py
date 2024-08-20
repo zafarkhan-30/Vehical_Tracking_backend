@@ -263,7 +263,7 @@ class ViewAllMBMTDeviceDetails(generics.GenericAPIView):
         return Response(data_list)
     
 class ViewAmnexDeviceDetails(APIView):
-    # permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
+    permission_classes = [IsAuthenticated , IsAmnex | IsBattery_IQ]
     throttle_classes = [UserRateThrottle , AnonRateThrottle]
     def get_queryset(self):
 
