@@ -147,3 +147,8 @@ class GetChargingStationSerializer(GeoFeatureModelSerializer):
         model = Chargingsation
         fields = ('name',)
         geo_field = "geom"
+
+
+
+class Get_totalRegenerationEnergySerializer(serializers.Serializer):
+     date = serializers.DateField(required=True)

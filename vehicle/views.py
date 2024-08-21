@@ -19,6 +19,11 @@ from rest_framework.throttling import UserRateThrottle , AnonRateThrottle
 from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from django.db.models import Sum
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font 
+from django.http import HttpResponse
 
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -292,15 +297,25 @@ class ViewAmnexDeviceDetails(APIView):
             for device in all_devices:
                 device_details_serailizer = deviceDetailsSerialiser(device).data
                 today = date.today()
+            
                 try:
                     master_data_list = MasterDeviceDetails.objects.filter(device_id = device ,
-                                                                           created_at__date=today).latest("created_at")
+                                                                          created_at__date=today ).latest("created_at")
+                    # select SUM(dm."totalRegenerationEnergy") from public.database_masterdevicedetails dm 
+                    # where  dm.device_id = 36 and DATE(dm.created_at) = '2024-08-17';
+
+                    
                     data_list_serializer = DataListSerializer(master_data_list).data
+
+                    # total_Today_RegenerationEnergy = MasterDeviceDetails.objects.filter(device_id=device,
+                    #         created_at__date=today).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
+
                 except:
                     continue
                 data_list.append({
                     'device_details' : device_details_serailizer,
-                    'data' : data_list_serializer
+                    'data' : data_list_serializer,
+                    #  'total_energy': total_Today_RegenerationEnergy
 
                 })
         else: 
@@ -431,3 +446,56 @@ class GetChargingStationView(generics.GenericAPIView):
                             'message' : 'data was successfully fetched',
                             'data': data},
                             status= status.HTTP_200_OK)
+
+
+class Get_totalRegenerationEnergy(generics.GenericAPIView):
+    parser_classes = [MultiPartParser]
+    serializer_class = Get_totalRegenerationEnergySerializer
+
+    def get_queryset(self):
+        return devices.objects.filter(name__icontains='MBMT')
+    
+    def get(self, request):
+        data_list = []
+        all_devices = self.get_queryset()
+        date = request.data.get('date')
+
+        if all_devices:
+            for device in all_devices:
+                device_details_serializer = deviceDetailsSerialiser(device).data
+
+                total_Today_RegenerationEnergy = MasterDeviceDetails.objects.filter(
+                    device_id=device,
+                    created_at__date=date
+                ).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
+                
+                data_list.append({
+                    'device_details': device_details_serializer.get("registrationNumber"),
+                    'date': date, 
+                    'RegenerationEnergy': total_Today_RegenerationEnergy
+                })
+
+        # Create an Excel workbook and add a worksheet
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Total Regeneration Energy"
+
+        # Define the header
+        headers = ['Vehicle Number', 'Date', 'Regeneration Energy']
+        ws.append(headers)
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[col_letter + '1'].font = Font(bold=True)
+
+        # Append data to the worksheet
+        for item in data_list:
+            ws.append([item['device_details'], item['date'], item['RegenerationEnergy']])
+
+        # Prepare the response to return the Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="total_regeneration_energy_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+
+        # Save the workbook to the response
+        wb.save(response)
+
+        return response
