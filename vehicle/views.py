@@ -458,44 +458,52 @@ class Get_totalRegenerationEnergy(generics.GenericAPIView):
     def get(self, request):
         data_list = []
         all_devices = self.get_queryset()
-        date = request.data.get('date')
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            date = serializer.validated_data.get('date')
+        
 
-        if all_devices:
-            for device in all_devices:
-                device_details_serializer = deviceDetailsSerialiser(device).data
+            if all_devices:
+                for device in all_devices:
+                    device_details_serializer = deviceDetailsSerialiser(device).data
 
-                total_Today_RegenerationEnergy = MasterDeviceDetails.objects.filter(
-                    device_id=device,
-                    created_at__date=date
-                ).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
-                
-                data_list.append({
-                    'device_details': device_details_serializer.get("registrationNumber"),
-                    'date': date, 
-                    'RegenerationEnergy': total_Today_RegenerationEnergy
-                })
+                    total_Today_RegenerationEnergy = MasterDeviceDetails.objects.filter(
+                        device_id=device,
+                        created_at__date=date
+                    ).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
+                    
+                    data_list.append({
+                        'registrationNumber': device_details_serializer.get("registrationNumber"),
+                        'name': device_details_serializer.get("name"),
+                        'date': date, 
+                        'RegenerationEnergy': total_Today_RegenerationEnergy
+                    })
 
-        # Create an Excel workbook and add a worksheet
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Total Regeneration Energy"
+            # Create an Excel workbook and add a worksheet
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Total Regeneration Energy"
 
-        # Define the header
-        headers = ['Vehicle Number', 'Date', 'Regeneration Energy']
-        ws.append(headers)
-        for col_num, header in enumerate(headers, 1):
-            col_letter = get_column_letter(col_num)
-            ws[col_letter + '1'].font = Font(bold=True)
+            # Define the header
+            headers = ['Vehicle Number', 'Name', 'Date', 'Regeneration Energy']
+            ws.append(headers)
+            for col_num, header in enumerate(headers, 1):
+                col_letter = get_column_letter(col_num)
+                ws[col_letter + '1'].font = Font(bold=True)
 
-        # Append data to the worksheet
-        for item in data_list:
-            ws.append([item['device_details'], item['date'], item['RegenerationEnergy']])
+            # Append data to the worksheet
+            for item in data_list:
+                ws.append([item['registrationNumber'],item['name'], item['date'], item['RegenerationEnergy']])
 
-        # Prepare the response to return the Excel file
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = f'attachment; filename="total_regeneration_energy_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+            # Prepare the response to return the Excel file
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = f'attachment; filename="total_regeneration_energy_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
 
-        # Save the workbook to the response
-        wb.save(response)
+            # Save the workbook to the response
+            wb.save(response)
 
-        return response
+            return response
+        else:
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
+            return Response({'status': 'error','message': error_message}, status=status.HTTP_400_BAD_REQUEST)
