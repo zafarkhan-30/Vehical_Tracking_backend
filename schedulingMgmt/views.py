@@ -132,7 +132,7 @@ class GetBussesListForPartik(GenericAPIView):
 
 
     
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
         # date = self.request.query_params.get('date')
         serializer = self.get_serializer(data = request.data)
