@@ -4,6 +4,8 @@ from .views import *
 urlpatterns = [ 
 
     path('GetRouteList/', GetRouteList.as_view(), ),
+    path('GetRouteListjson/', GetRouteListForPartik.as_view(), ),
+    path('GetRouteList/', GetRouteList.as_view(), ),
     path('GetallBussesList/', GetBussesList.as_view(), ),
     path('GetallBussesListjson/', GetBussesListForPartik.as_view(), ),
     path('GetChargersList/', GetChargersList.as_view(), ),

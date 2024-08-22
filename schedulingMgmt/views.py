@@ -52,6 +52,46 @@ class GetRouteList(GenericAPIView):
             )
 
 
+
+class GetRouteListForPartik(GenericAPIView):
+    serializer_class =GetRouteListSerializer
+    permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data = request.data)
+        if serializer.is_valid():
+            date = serializer.validated_data.get('date')
+            user_group = str(request.user.groups.first())
+            try:
+                cursor = get_db_cursor()
+            except Exception as e:
+                    return Response(
+                        {
+                            "status": "error",
+                            "message": str(e)
+                        }, status=status.HTTP_400_BAD_REQUEST
+                    )
+            itms = ITMS(cursor, user_group)
+            RouteList = itms.get_route_list(date)
+            return Response(
+                {
+                    "status": "success",
+                    "data": {
+                        'route_list' : RouteList
+                }
+                } , status= status.HTTP_200_OK
+            )
+        else:
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
+            return Response(
+                {
+                    "status": "error",
+                    "message": error_message
+                }, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class GetScheduleBusesList(GenericAPIView):
     permission_classes= [IsAuthenticated , IsUber | IsMBMT ]
     serializer_class = None
