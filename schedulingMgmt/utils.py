@@ -103,9 +103,9 @@ class ITMS:
                         mtn.BusCode,
                         mtn.VehicleNumber,
                         MAX(osd.SchedulingDate) AS LatestSchedulingDate,
-                        MAX(osd.StartODO) AS StartODO,
+                        MIN(osd.StartODO) AS StartODO,
                         MAX(osd.EndODO) AS EndODO,
-                        COALESCE(MAX(osd.EndODO) - MAX(osd.StartODO), 0) AS TotalKmRunToday,
+                        COALESCE(MAX(osd.EndODO) - MIN(osd.StartODO), 0) AS TotalKmRunToday,
                         CASE WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
                             ELSE 'Not Scheduled'
                         END AS Status,
@@ -180,18 +180,21 @@ class ITMS:
                         lastOdo.EndODO
                     ORDER BY 
                         mtn.BusInformationId;
-
                     ''')
         
         result = to_get_the_status.fetchall()
         
-        query_result =  [{'VehicleNumber': row.VehicleNumber , 'BusInformationId' : row.BusInformationId , 
-                    'BusCode': row.BusCode , 'Status' : row.Status ,
-                    'MorningScheduleCodes': row.MorningScheduleCodes , 'EveningScheduleCodes':row.EveningScheduleCodes, 'TotalKmRunDay' : round(row.TotalKmRunToday),
-                    "Charging_cycle": round(row.ChargingCycles),
-                    'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
-                    'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
-                    'TotalKm' : round(row.LastODO)  } for row in result]
+        query_result =  [{'VehicleNumber': row.VehicleNumber , 
+                        'BusInformationId' : row.BusInformationId , 
+                        'BusCode': row.BusCode ,
+                        'Status' : row.Status ,
+                        'MorningScheduleCodes': row.MorningScheduleCodes , 
+                        'EveningScheduleCodes':row.EveningScheduleCodes, 
+                        'TotalKmRunDay' : round(row.TotalKmRunToday),
+                        "Charging_cycle": round(row.ChargingCycles),
+                        'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
+                        'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
+                        'TotalKm' : round(row.LastODO)  } for row in result]
         
         return query_result
 
