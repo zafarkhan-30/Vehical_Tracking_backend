@@ -272,8 +272,8 @@ class ITMS:
             },
             'Total' : {
                 'BusesCharged': row.TotalBusesChargedTillDate ,
-                'EnergyConsumed' : round(row.TotalEnergyConsumedTillDate),
-                'OperationalHours' : round(row.TotalOperationalHoursTillDate)
+                'EnergyConsumed' : (row.TotalEnergyConsumedTillDate),
+                'OperationalHours' : (row.TotalOperationalHoursTillDate)
             }
         } for row in query]
         return query_result

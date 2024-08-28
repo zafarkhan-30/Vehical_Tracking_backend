@@ -235,10 +235,8 @@ class GetChargersList(GenericAPIView):
                     }, status=status.HTTP_400_BAD_REQUEST
                 )
             itms = ITMS(cursor , user_group)
-            try:
-                Charger_list = itms.get_charger_detail_list(choice, date)
-            except:
-                return Response(Charger_list , status= 400)
+            
+            Charger_list = itms.get_charger_detail_list(choice, date)
             return Response(
                 {
                     "status": "success",
@@ -258,7 +256,7 @@ class GetChargersList(GenericAPIView):
                 }, status=status.HTTP_400_BAD_REQUEST
             )
     
-class GetChargersListForPartik(GenericAPIView):
+class GetChargersListForPartik(GenericAPIView): 
     
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
     # parser_classes = [MultiPartParser]
@@ -339,7 +337,9 @@ class GetChargerDetail(GenericAPIView):
                 } , status= status.HTTP_200_OK
             )
         else:
-            error_message = error_simplifier(serializer.errors)
+            # error_message = error_simplifier(serializer.errors)
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
             return Response({
                 "status": "error",
                 "message": error_message} ,
@@ -378,7 +378,9 @@ class GetChargerDetailForPartik(GenericAPIView):
                 } , status= status.HTTP_200_OK
             )
         else:
-            error_message = error_simplifier(serializer.errors)
+            # error_message = error_simplifier(serializer.errors)
+            key, value =list(serializer.errors.items())[0]
+            error_message = key + ", " + value[0]
             return Response({
                 "status": "error",
                 "message": error_message} ,
