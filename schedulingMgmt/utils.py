@@ -6,6 +6,7 @@ from datetime import  date
 import random
 from rest_framework.response import Response
 import pyodbc
+from django.db.models import Sum
 from VehicalTracking.settings import ITMS_SERVER , ITMS_DRIVER, ITMS_PASSWORD , ITMS_USERNAME , ITMS_DATABASE_NAME
 # from .db_connection import DatabaseConnection
 
@@ -79,13 +80,14 @@ class ITMS:
                 r.RouteId;
         ''')
         result = self.cursor.fetchall()
+
         return [{'route_id': row.RouteId, 'Name': row.Name, 
                  'Code': row.Code , 
                  'date' : row.Date ,
                  'NumberOfBuses': row.NumberOfBuses , 
                  'NumberOfSchedules' : row.NumberOfScheduleCodes,
                  'TotalTrip' : row.TotalTrip , 
-                 'route_length' : random.randint(20,50) # need to update route length
+                 'route_length' : random.randint(20,50) # need to update route length once the data is vailable
                  } for row in result]
 
     def get_route_count(self):
@@ -194,7 +196,9 @@ class ITMS:
                         "Charging_cycle": round(row.ChargingCycles),
                         'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                         'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
-                        'TotalKm' : round(row.LastODO)  } for row in result]
+                        'TotalKm' : round(row.LastODO) ,
+                        'RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
+                            created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in result]
         
         return query_result
 

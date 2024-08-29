@@ -53,6 +53,8 @@ class GetRouteList(GenericAPIView):
 
 
 
+
+
 class GetRouteListForPartik(GenericAPIView):
     serializer_class =GetRouteListSerializer
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
@@ -235,6 +237,8 @@ class GetChargersList(GenericAPIView):
                     }, status=status.HTTP_400_BAD_REQUEST
                 )
             itms = ITMS(cursor , user_group)
+            
+            
             
             Charger_list = itms.get_charger_detail_list(choice, date)
             return Response(
