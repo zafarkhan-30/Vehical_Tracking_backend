@@ -173,11 +173,11 @@ class GetBussesListForPartik(GenericAPIView):
     # parser_classes = [MultiPartParser]
 
 
-    
     def post(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
         # date = self.request.query_params.get('date')
         serializer = self.get_serializer(data = request.data)
+        vehical_number = self.request.query_params.get('vehical')
         if serializer.is_valid():
             date = serializer.validated_data.get('date')
             try:
@@ -191,7 +191,7 @@ class GetBussesListForPartik(GenericAPIView):
                     )
             itms = ITMS(cursor , user_group)
         
-            buses_list = itms.get_buses_detail_list(date)
+            buses_list = itms.get_buses_detail_list(date , vehical_number)
             return Response(
                 {
                     "status": "success",
@@ -219,7 +219,6 @@ class GetChargersList(GenericAPIView):
     parser_classes = [MultiPartParser]
     serializer_class = GetChargersListSerializer
 
-    
     
     def get(self, request, *args, **kwargs):
         serializer = self.get_serializer(data = request.data)
@@ -274,6 +273,7 @@ class GetChargersListForPartik(GenericAPIView):
             choice = serializer.validated_data.get('choice')
             date = serializer.validated_data.get('date')
             user_group = str(request.user.groups.first())
+            charger_name = self.request.query_params.get('charger_name')
             try:
                 cursor = get_db_cursor()
             except Exception as e:
@@ -284,10 +284,9 @@ class GetChargersListForPartik(GenericAPIView):
                     }, status=status.HTTP_400_BAD_REQUEST
                 )
             itms = ITMS(cursor , user_group)
-            try:
-                Charger_list = itms.get_charger_detail_list(choice, date)
-            except:
-                return Response(Charger_list , status= 400)
+            
+            Charger_list = itms.get_charger_detail_list(choice, date , charger_name)
+            
             return Response(
                 {
                     "status": "success",
@@ -440,51 +439,3 @@ class GetdashboardCountView(GenericAPIView):
         )
 
 
-
-
-
-
-
-
-
-
-# from sqlalchemy import create_engine 
-# import geopandas as gpd
-# from django.core.files.storage import default_storage
-# from django.core.files.base import ContentFile
-# import os
-
-
-# class ImportShapeFile(GenericAPIView):
-#     serializer_class = ImportShapeFileSerializer
-#     parser_classes = [MultiPartParser]
-
-#     def post(self, request):
-#         db_settings = settings.DATABASES['default']
-                
-#         # Construct the connection string
-#         user = db_settings['USER']
-#         password = db_settings['PASSWORD']
-#         host = db_settings['HOST']
-#         port = db_settings['PORT']
-#         database = db_settings['NAME']
-
-#         conn = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-#         engine = create_engine(conn)
-
-#         shape_file = request.FILES.get('shape_file')
-        
-#         if not shape_file:
-#             return Response({"error": "No shapefile provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Save the uploaded file to the temporary directory
-#         file_name = default_storage.save(shape_file.name, ContentFile(shape_file.read()))
-#         file_path = os.path.join(settings.MEDIA_ROOT, file_name)
-        
-       
-#         # Read the shapefile using GeoPandas
-#         gdf = gpd.read_file(file_path)
-#         print(gdf)
-        
-#         # gdf.to_postgis(name="boundary", con=engine, schema="public", if_exists='replace')
-#         return Response(None)

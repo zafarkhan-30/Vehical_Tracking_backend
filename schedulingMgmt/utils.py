@@ -80,7 +80,7 @@ class ITMS:
                 r.RouteId;
         ''')
         result = self.cursor.fetchall()
-
+        
         return [{'route_id': row.RouteId, 'Name': row.Name, 
                  'Code': row.Code , 
                  'date' : row.Date ,
@@ -98,7 +98,17 @@ class ITMS:
         ''')
         return self.cursor.fetchone()[0]
 
-    def get_buses_detail_list(self , date = None):
+    def get_buses_detail_list(self , date = None , vehicle_number = None , page = 1):
+        offset = (page - 1) * 15  # Calculate the offset for the specified page
+        if vehicle_number == '':
+            filter = f"""
+                    mtn.CompanyId = '{self.company_id}' """
+        else:
+            filter = f"""
+                    mtn.CompanyId = '{self.company_id}'
+                    AND mtn.VehicleNumber LIKE '{vehicle_number}%'
+                    """
+
         to_get_the_status= self.cursor.execute(f'''
                         SELECT 
                         mtn.BusInformationId,
@@ -174,7 +184,7 @@ class ITMS:
                     LEFT JOIN 
                         MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
                     WHERE 
-                        mtn.CompanyId = 1
+                        {filter}
                     GROUP BY 
                         mtn.BusInformationId,
                         mtn.BusCode,
@@ -182,8 +192,9 @@ class ITMS:
                         lastOdo.EndODO
                     ORDER BY 
                         mtn.BusInformationId;
+                    
                     ''')
-        
+
         result = to_get_the_status.fetchall()
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 
@@ -197,13 +208,24 @@ class ITMS:
                         'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                         'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
                         'TotalKm' : round(row.LastODO) ,
-                        'RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
+                        'total_Today_RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
                             created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in result]
         
         return query_result
 
 
-    def get_charger_detail_list(self , choice , date= None):
+    def get_charger_detail_list(self , choice , date= None , charger_number=None):
+        print(charger_number)
+        if charger_number == '':
+            filter = f"""
+                cm.CompanyId = '{self.company_id}'
+            """
+        else:
+            filter = f"""
+                cm.CompanyId = '{self.company_id}'
+                AND cm.ChargerNumber LIKE '{charger_number}%'
+            """
+
         
         if choice == 'Day':
             time_condition = "AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')"
@@ -250,7 +272,7 @@ class ITMS:
                 MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
                 AND bc.ChargingDate = '{date}' {time_condition}
             WHERE 
-                cm.CompanyId = '{self.company_id}'
+                {filter}
             GROUP BY 
                 cm.ChargerMasterId, 
                 cm.ChargerNumber, 
@@ -259,7 +281,6 @@ class ITMS:
             ORDER BY 
                 cm.ChargerMasterId;
         ''')
-    
         
         query = self.cursor.fetchall()
         query_result = [{

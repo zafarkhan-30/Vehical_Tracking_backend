@@ -44,6 +44,7 @@ class GetBussesListSerializer(serializers.Serializer):
 
 
 
+
 class ChargerDetailSerializer(serializers.Serializer):
     choice_list = [('Day' , 'Day'), ('Night' , 'Night'), ("Total" , "Total"),]
     choice = serializers.ChoiceField(choices =  choice_list,required = True)
