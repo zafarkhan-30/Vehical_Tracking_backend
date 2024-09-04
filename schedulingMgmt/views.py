@@ -60,38 +60,41 @@ class GetRouteListForPartik(GenericAPIView):
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data = request.data)
-        if serializer.is_valid():
-            date = serializer.validated_data.get('date')
-            user_group = str(request.user.groups.first())
-            try:
-                cursor = get_db_cursor()
-            except Exception as e:
-                    return Response(
-                        {
-                            "status": "error",
-                            "message": str(e)
-                        }, status=status.HTTP_400_BAD_REQUEST
-                    )
-            itms = ITMS(cursor, user_group)
-            RouteList = itms.get_route_list(date)
-            return Response(
-                {
-                    "status": "success",
-                    "data": {
-                        'route_list' : RouteList
-                }
-                } , status= status.HTTP_200_OK
-            )
-        else:
-            key, value =list(serializer.errors.items())[0]
-            error_message = key + ", " + value[0]
-            return Response(
-                {
-                    "status": "error",
-                    "message": error_message
-                }, status=status.HTTP_400_BAD_REQUEST
-            )
+        
+        
+        user_group = str(request.user.groups.first())
+        page = int(self.request.query_params.get('page'))
+        page_size = int(self.request.query_params.get('page_size'))
+        date = self.request.query_params.get('date')
+        route_number = self.request.query_params.get('route_number')
+        try:
+            cursor = get_db_cursor()
+        except Exception as e:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
+        itms = ITMS(cursor, user_group)
+        RouteList = itms.get_route_list(date ,route_number , page , page_size)
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    'route_list' : RouteList
+            }
+            } , status= status.HTTP_200_OK
+        )
+        # else:
+        #     key, value =list(serializer.errors.items())[0]
+        #     error_message = key + ", " + value[0]
+        #     return Response(
+        #         {
+        #             "status": "error",
+        #             "message": error_message
+        #         }, status=status.HTTP_400_BAD_REQUEST
+        #     )
 
 
 class GetScheduleBusesList(GenericAPIView):

@@ -51,7 +51,16 @@ class ITMS:
             return 2
         return None
 
-    def get_route_list(self , date):
+    def get_route_list(self , date , route_number = '' , page = 1 , page_size=15 ):
+        offset = (page - 1) * page_size
+        if route_number == '':
+            filter = f"""
+                    os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}' 
+                    """
+        else:
+            filter = f"""
+                    os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}' AND r.Code LIKE '%{route_number}%'
+                    """
         self.cursor.execute(f'''
            SELECT 
             r.RouteId AS RouteId,
@@ -70,14 +79,15 @@ class ITMS:
             JOIN 
                 OPR_Route r ON o.RouteId = r.RouteId
             WHERE 
-                os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}'
+                {filter}
             GROUP BY 
                 r.RouteId,
                 r.Name,
                 r.Code,
                 os.SchedulingDate 
             ORDER BY 
-                r.RouteId;
+                r.RouteId
+            OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
         ''')
         result = self.cursor.fetchall()
         
