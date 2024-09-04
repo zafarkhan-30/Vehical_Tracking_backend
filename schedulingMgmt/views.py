@@ -176,40 +176,32 @@ class GetBussesListForPartik(GenericAPIView):
     def post(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
         # date = self.request.query_params.get('date')
-        serializer = self.get_serializer(data = request.data)
-        vehical_number = self.request.query_params.get('vehical')
-        if serializer.is_valid():
-            date = serializer.validated_data.get('date')
-            try:
-                cursor = get_db_cursor()
-            except Exception as e:
-                    return Response(
-                        {
-                            "status": "error",
-                            "message": str(e)
-                        }, status=status.HTTP_400_BAD_REQUEST
-                    )
-            itms = ITMS(cursor , user_group)
         
-            buses_list = itms.get_buses_detail_list(date , vehical_number)
-            return Response(
-                {
-                    "status": "success",
-                    "data": {
-                        
-                        'buses_list' : buses_list
-                }
-                } , status= status.HTTP_200_OK
-            )
-        else:
-            key, value =list(serializer.errors.items())[0]
-            error_message = key + ", " + value[0]
-            return Response(
-                {
-                    "status": "error",
-                    "message": error_message
-                }, status=status.HTTP_400_BAD_REQUEST
-            )
+        date = self.request.query_params.get('date')
+        vehical_number = self.request.query_params.get('vehical')
+        page = int(self.request.query_params.get('page'))
+        page_size = int(self.request.query_params.get('page_size'))
+        try:
+            cursor = get_db_cursor()
+        except Exception as e:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": str(e)
+                    }, status=status.HTTP_400_BAD_REQUEST
+                )
+        itms = ITMS(cursor , user_group)
+    
+        buses_list = itms.get_buses_detail_list(date , vehical_number ,page, page_size)
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    'buses_list' : buses_list
+            }
+            } , status= status.HTTP_200_OK
+        )
+    
 
 
 
@@ -263,48 +255,50 @@ class GetChargersListForPartik(GenericAPIView):
     
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
     # parser_classes = [MultiPartParser]
-    serializer_class = GetChargersListSerializer
+    # serializer_class = GetChargersListSerializer
 
     
     
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data = request.data)
-        if serializer.is_valid():
-            choice = serializer.validated_data.get('choice')
-            date = serializer.validated_data.get('date')
-            user_group = str(request.user.groups.first())
-            charger_name = self.request.query_params.get('charger_name')
-            try:
-                cursor = get_db_cursor()
-            except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-            itms = ITMS(cursor , user_group)
+       
             
-            Charger_list = itms.get_charger_detail_list(choice, date , charger_name)
-            
-            return Response(
-                {
-                    "status": "success",
-                    "data": {
-                        'Charger_list' : Charger_list
-                }
-                } , status= status.HTTP_200_OK
-            )
-        else:
-            
-            key, value =list(serializer.errors.items())[0]
-            error_message = key + ", " + value[0]
+        user_group = str(request.user.groups.first())
+        charger_name = self.request.query_params.get('charger_name')
+        choice = self.request.query_params.get('choice')
+        date = self.request.query_params.get('date')
+        page = int(self.request.query_params.get('page'))
+        page_size = int(self.request.query_params.get('page_size'))
+        try:
+            cursor = get_db_cursor()
+        except Exception as e:
             return Response(
                 {
                     "status": "error",
-                    "message": error_message
+                    "message": str(e)
                 }, status=status.HTTP_400_BAD_REQUEST
             )
+        itms = ITMS(cursor , user_group)
+        
+        Charger_list = itms.get_charger_detail_list(choice, date , charger_name , page , page_size)
+        
+        return Response(
+            {
+                "status": "success",
+                "data": {
+                    'Charger_list' : Charger_list
+            }
+            } , status= status.HTTP_200_OK
+        )
+        # else:
+            
+            # key, value =list(serializer.errors.items())[0]
+            # error_message = key + ", " + value[0]
+            # return Response(
+            #     {
+            #         "status": "error",
+            #         "message": error_message
+            #     }, status=status.HTTP_400_BAD_REQUEST
+            # )
     
 
 class GetChargerDetail(GenericAPIView):

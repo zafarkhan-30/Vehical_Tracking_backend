@@ -98,8 +98,12 @@ class ITMS:
         ''')
         return self.cursor.fetchone()[0]
 
-    def get_buses_detail_list(self , date = None , vehicle_number = None , page = 1):
-        offset = (page - 1) * 15  # Calculate the offset for the specified page
+    def get_buses_detail_list(self , date = None, vehicle_number = '' , page = 1 , page_size=15 ):
+        if date is None:
+            date = datetime.date.today()
+
+        offset = (page - 1) * page_size
+
         if vehicle_number == '':
             filter = f"""
                     mtn.CompanyId = '{self.company_id}' """
@@ -108,8 +112,7 @@ class ITMS:
                     mtn.CompanyId = '{self.company_id}'
                     AND mtn.VehicleNumber LIKE '{vehicle_number}%'
                     """
-
-        to_get_the_status= self.cursor.execute(f'''
+        query= self.cursor.execute(f'''
                         SELECT 
                         mtn.BusInformationId,
                         mtn.BusCode,
@@ -191,18 +194,19 @@ class ITMS:
                         mtn.VehicleNumber,
                         lastOdo.EndODO
                     ORDER BY 
-                        mtn.BusInformationId;
+                        mtn.BusInformationId
+                    OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
                     
                     ''')
 
-        result = to_get_the_status.fetchall()
+        result = query.fetchall()
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 
                         'BusInformationId' : row.BusInformationId , 
                         'BusCode': row.BusCode ,
                         'Status' : row.Status ,
                         'MorningScheduleCodes': row.MorningScheduleCodes , 
-                        'EveningScheduleCodes':row.EveningScheduleCodes, 
+                        'EveningScheduleCodes': row.EveningScheduleCodes, 
                         'TotalKmRunDay' : round(row.TotalKmRunToday),
                         "Charging_cycle": round(row.ChargingCycles),
                         'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
@@ -214,8 +218,11 @@ class ITMS:
         return query_result
 
 
-    def get_charger_detail_list(self , choice , date= None , charger_number=None):
-        print(charger_number)
+    def get_charger_detail_list(self , choice , date= None , charger_number='' , page = 1 , page_size=15):
+        offset = (page - 1) * page_size
+        if date is None:
+            date = datetime.date.today()
+
         if charger_number == '':
             filter = f"""
                 cm.CompanyId = '{self.company_id}'
@@ -279,7 +286,8 @@ class ITMS:
                 cm.Status,
                 cm.SerialNumber
             ORDER BY 
-                cm.ChargerMasterId;
+                cm.ChargerMasterId
+            OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
         ''')
         
         query = self.cursor.fetchall()
