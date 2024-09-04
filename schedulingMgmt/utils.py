@@ -110,7 +110,7 @@ class ITMS:
         else:
             filter = f"""
                     mtn.CompanyId = '{self.company_id}'
-                    AND mtn.VehicleNumber LIKE '{vehicle_number}%'
+                    AND mtn.VehicleNumber LIKE '%{vehicle_number}%'
                     """
         query= self.cursor.execute(f'''
                         SELECT 
@@ -230,7 +230,7 @@ class ITMS:
         else:
             filter = f"""
                 cm.CompanyId = '{self.company_id}'
-                AND cm.ChargerNumber LIKE '{charger_number}%'
+                AND cm.ChargerNumber LIKE '%{charger_number}%'
             """
 
         
