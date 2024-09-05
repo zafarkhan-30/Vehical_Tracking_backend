@@ -60,8 +60,6 @@ class GetRouteListForPartik(GenericAPIView):
     permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
 
     def post(self, request, *args, **kwargs):
-        
-        
         user_group = str(request.user.groups.first())
         page = int(self.request.query_params.get('page'))
         page_size = int(self.request.query_params.get('page_size'))
@@ -82,22 +80,18 @@ class GetRouteListForPartik(GenericAPIView):
             {
                 "status": "success",
                 "data": {
-                    'route_list' : RouteList
+                    'total_count': RouteList[1] ,
+                    'total_page_count' : itms.custom_round_up(RouteList[1] / page_size), 
+                    "page": page , 
+                    "page_size": page_size , 
+                    'route_list' : RouteList[0 ],
             }
             } , status= status.HTTP_200_OK
         )
-        # else:
-        #     key, value =list(serializer.errors.items())[0]
-        #     error_message = key + ", " + value[0]
-        #     return Response(
-        #         {
-        #             "status": "error",
-        #             "message": error_message
-        #         }, status=status.HTTP_400_BAD_REQUEST
-        #     )
-
+        
 
 class GetScheduleBusesList(GenericAPIView):
+
     permission_classes= [IsAuthenticated , IsUber | IsMBMT ]
     serializer_class = None
     def get(self , request, scheduling_date , route_id , *args, **kwargs):
@@ -200,7 +194,11 @@ class GetBussesListForPartik(GenericAPIView):
             {
                 "status": "success",
                 "data": {
-                    'buses_list' : buses_list
+                    'total_count': buses_list[1] ,
+                    'total_page_count' :  itms.custom_round_up(buses_list[1] / page_size) , 
+                    "page": page , 
+                    "page_size": page_size , 
+                    'buses_list' : buses_list[0]
             }
             } , status= status.HTTP_200_OK
         )
@@ -283,12 +281,15 @@ class GetChargersListForPartik(GenericAPIView):
         itms = ITMS(cursor , user_group)
         
         Charger_list = itms.get_charger_detail_list(choice, date , charger_name , page , page_size)
-        
         return Response(
             {
                 "status": "success",
                 "data": {
-                    'Charger_list' : Charger_list
+                    'total_count': Charger_list[1] ,
+                    'total_page_count' : itms.custom_round_up( Charger_list[1] / page_size) , 
+                    "page": page , 
+                    "page_size": page_size , 
+                    'Charger_list' : Charger_list[0],
             }
             } , status= status.HTTP_200_OK
         )

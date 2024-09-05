@@ -7,6 +7,7 @@ import random
 from rest_framework.response import Response
 import pyodbc
 from django.db.models import Sum
+import math
 from VehicalTracking.settings import ITMS_SERVER , ITMS_DRIVER, ITMS_PASSWORD , ITMS_USERNAME , ITMS_DATABASE_NAME
 # from .db_connection import DatabaseConnection
 
@@ -44,6 +45,9 @@ class ITMS:
         self.cursor = cursor
         self.company_id = self.get_company_id(user_group)
 
+
+    def custom_round_up(self , n):
+        return math.floor(n + 0.5)
     def get_company_id(self, user_group):
         if user_group == 'MBMT':
             return 1
@@ -61,7 +65,23 @@ class ITMS:
             filter = f"""
                     os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}' AND r.Code LIKE '%{route_number}%'
                     """
-        self.cursor.execute(f'''
+        count_query = self.cursor.execute(f'''
+                                SELECT 
+                            count(DISTINCT (r.Code))
+                            FROM 
+                                OPR_Scheduling os
+                            JOIN 
+                                OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                            JOIN 
+                                OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                            JOIN 
+                                OPR_Route r ON o.RouteId = r.RouteId
+                            WHERE 
+                                {filter}''')
+        
+        total_count = count_query.fetchone()[0]
+        
+        query = self.cursor.execute(f'''
            SELECT 
             r.RouteId AS RouteId,
             r.Name AS Name,
@@ -89,9 +109,8 @@ class ITMS:
                 r.RouteId
             OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
         ''')
-        result = self.cursor.fetchall()
-        
-        return [{'route_id': row.RouteId, 'Name': row.Name, 
+        result =query.fetchall()
+        result = [{'route_id': row.RouteId, 'Name': row.Name, 
                  'Code': row.Code , 
                  'date' : row.Date ,
                  'NumberOfBuses': row.NumberOfBuses , 
@@ -99,7 +118,8 @@ class ITMS:
                  'TotalTrip' : row.TotalTrip , 
                  'route_length' : random.randint(20,50) # need to update route length once the data is vailable
                  } for row in result]
-
+        
+        return result , total_count
     def get_route_count(self):
         self.cursor.execute(f'''
             SELECT COUNT(DISTINCT Code) 
@@ -122,6 +142,46 @@ class ITMS:
                     mtn.CompanyId = '{self.company_id}'
                     AND mtn.VehicleNumber LIKE '%{vehicle_number}%'
                     """
+        count_query = self.cursor.execute(f'''
+                SELECT 
+                COUNT(DISTINCT (mtn.BusInformationId))
+                FROM 
+                    MTN_BusInformation mtn
+                LEFT JOIN 
+                    (
+                        SELECT 
+                            osd.BusInformationId,
+                            osd.SchedulingId,
+                            osd.StartODO,
+                            osd.EndODO,
+                            os.SchedulingDate,
+                            osd.ScheduleId  -- Include ScheduleId in subquery
+                    FROM 
+                        OPR_SchedulingDetails osd
+                    JOIN 
+                        OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+                    WHERE 
+                        os.SchedulingDate = '{date}' 
+                            AND osd.IsDelete = 0
+                            AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
+                    ) osd ON mtn.BusInformationId = osd.BusInformationId
+                LEFT JOIN 
+                    (
+                        SELECT 
+                            BusInformationId, 
+                            MAX(EndODO) AS EndODO
+                        FROM 
+                            OPR_SchedulingDetails
+                        WHERE 
+                            IsDelete = 0
+                        GROUP BY 
+                            BusInformationId
+                    ) lastOdo ON mtn.BusInformationId = lastOdo.BusInformationId
+                LEFT JOIN 
+                    MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
+                WHERE {filter}
+            ''')
+        total_count = count_query.fetchone()[0]
         query= self.cursor.execute(f'''
                         SELECT 
                         mtn.BusInformationId,
@@ -225,11 +285,13 @@ class ITMS:
                         'total_Today_RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
                             created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in result]
         
-        return query_result
+        return query_result , total_count
 
 
     def get_charger_detail_list(self , choice , date= None , charger_number='' , page = 1 , page_size=15):
         offset = (page - 1) * page_size
+        
+
         if date is None:
             date = datetime.date.today()
 
@@ -257,6 +319,18 @@ class ITMS:
             time_condition = ""
         else:
             time_condition = ""
+
+
+        count_query = self.cursor.execute(f"""SELECT 
+            COUNT(DISTINCT(bc.ChargerMasterId)) AS totalcount
+            FROM 
+                MTN_ChargerMaster cm
+            LEFT JOIN 
+                MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
+                AND bc.ChargingDate = '2024-08-09' AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')
+            WHERE 
+                {filter} """)
+        total_count = count_query.fetchone()    
         
         self.cursor.execute(f'''
                 SELECT 
@@ -317,9 +391,9 @@ class ITMS:
                 'BusesCharged': row.TotalBusesChargedTillDate ,
                 'EnergyConsumed' : (row.TotalEnergyConsumedTillDate),
                 'OperationalHours' : (row.TotalOperationalHoursTillDate)
-            }
-        } for row in query]
-        return query_result
+            }, 
+        }   for row in query]
+        return query_result , total_count[0]
       
     def get_charger_Details(self, choice , date , charger_id):
         if choice == 'Day':
