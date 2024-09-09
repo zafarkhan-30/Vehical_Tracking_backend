@@ -48,7 +48,7 @@ class ITMS:
 
     def custom_round_up(self , n):
 
-        return math.ceil(n + 0.5)
+        return math.ceil(n)
     def get_company_id(self, user_group):
         if user_group == 'MBMT':
             return 1

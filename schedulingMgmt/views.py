@@ -190,6 +190,7 @@ class GetBussesListForPartik(GenericAPIView):
         itms = ITMS(cursor , user_group)
     
         buses_list = itms.get_buses_detail_list(date , vehical_number ,page, page_size)
+        print(buses_list[1] , page_size)
         return Response(
             {
                 "status": "success",
