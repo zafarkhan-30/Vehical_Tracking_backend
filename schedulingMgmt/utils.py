@@ -47,7 +47,8 @@ class ITMS:
 
 
     def custom_round_up(self , n):
-        return math.floor(n + 0.5)
+
+        return math.ceil(n + 0.5)
     def get_company_id(self, user_group):
         if user_group == 'MBMT':
             return 1
@@ -299,11 +300,17 @@ class ITMS:
             filter = f"""
                 cm.CompanyId = '{self.company_id}'
             """
+
+            count_filter = f"""CompanyId = '{self.company_id}'"""
         else:
             filter = f"""
                 cm.CompanyId = '{self.company_id}'
                 AND cm.ChargerNumber LIKE '%{charger_number}%'
             """
+            count_filter = f"""
+                CompanyId = '{self.company_id}' AND ChargerNumber LIKE '%{charger_number}%'
+
+                """
 
         
         if choice == 'Day':
@@ -320,17 +327,20 @@ class ITMS:
         else:
             time_condition = ""
 
+        count_filter = f"""
+                CompanyId = '{self.company_id}' AND ChargerNumber LIKE '%{charger_number}%'
 
+                """
+        
         count_query = self.cursor.execute(f"""SELECT 
-            COUNT(DISTINCT(bc.ChargerMasterId)) AS totalcount
+            COUNT(DISTINCT(ChargerMasterId)) AS totalcount
             FROM 
-                MTN_ChargerMaster cm
-            LEFT JOIN 
-                MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
-                AND bc.ChargingDate = '2024-08-09' AND (CONVERT(TIME, bc.StartTime) BETWEEN '06:00:00' AND '21:59:59')
-            WHERE 
-                {filter} """)
-        total_count = count_query.fetchone()    
+                MTN_ChargerMaster 
+           
+            WHERE {count_filter}
+                 """)
+        total_count = count_query.fetchone()  
+        # print(total_count)
         
         self.cursor.execute(f'''
                 SELECT 
