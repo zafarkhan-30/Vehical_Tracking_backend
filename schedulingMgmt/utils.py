@@ -47,8 +47,8 @@ class ITMS:
 
 
     def custom_round_up(self , n):
-
         return math.ceil(n)
+    
     def get_company_id(self, user_group):
         if user_group == 'MBMT':
             return 1
@@ -56,16 +56,15 @@ class ITMS:
             return 2
         return None
 
-    def get_route_list(self , date , route_number = '' , page = 1 , page_size=15 ):
-        offset = (page - 1) * page_size
-        if route_number == '':
-            filter = f"""
-                    os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}' 
-                    """
-        else:
-            filter = f"""
-                    os.SchedulingDate = '{date}' AND r.CompanyId = '{self.company_id}' AND r.Code LIKE '%{route_number}%'
-                    """
+    def get_route_list(self , date = None , route_number = '' , page = None , page_size=None ):
+        date = date or datetime.date.today()
+        pagination = f"""OFFSET {(int(page) - 1) * int(page_size)} ROWS FETCH NEXT {page_size} ROWS ONLY""" \
+            if page and page_size else ""
+        
+        filter = f"""
+                 AND r.CompanyId = '{self.company_id}' 
+                 {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
+                """
         count_query = self.cursor.execute(f'''
                                 SELECT 
                             count(DISTINCT (r.Code))
@@ -78,7 +77,7 @@ class ITMS:
                             JOIN 
                                 OPR_Route r ON o.RouteId = r.RouteId
                             WHERE 
-                                {filter}''')
+                                 os.SchedulingDate = '{date}' {filter}''')
         
         total_count = count_query.fetchone()[0]
         
@@ -100,7 +99,7 @@ class ITMS:
             JOIN 
                 OPR_Route r ON o.RouteId = r.RouteId
             WHERE 
-                {filter}
+                os.SchedulingDate = '{date}' {filter}
             GROUP BY 
                 r.RouteId,
                 r.Name,
@@ -108,8 +107,9 @@ class ITMS:
                 os.SchedulingDate 
             ORDER BY 
                 r.RouteId
-            OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
+            {pagination}
         ''')
+        print(query)
         result =query.fetchall()
         result = [{'route_id': row.RouteId, 'Name': row.Name, 
                  'Code': row.Code , 
@@ -117,32 +117,29 @@ class ITMS:
                  'NumberOfBuses': row.NumberOfBuses , 
                  'NumberOfSchedules' : row.NumberOfScheduleCodes,
                  'TotalTrip' : row.TotalTrip , 
-                 'route_length' : random.randint(20,50) # need to update route length once the data is vailable
+                 'route_length' : random.randint(50,80) # need to update route length once the data is vailable
                  } for row in result]
         
         return result , total_count
     def get_route_count(self):
         self.cursor.execute(f'''
             SELECT COUNT(DISTINCT Code) 
-            FROM OPR_Route 
+            FROM OPR_Route
             WHERE CompanyId = '{self.company_id}';
         ''')
         return self.cursor.fetchone()[0]
 
-    def get_buses_detail_list(self , date = None, vehicle_number = '' , page = 1 , page_size=15 ):
-        if date is None:
-            date = datetime.date.today()
+    def get_buses_detail_list(self , date = None, vehicle_number = '' , page = None , page_size=None ):
+        date = date or datetime.date.today()  # Use today's date if no date is provided
 
-        offset = (page - 1) * page_size
+        pagination = f"""OFFSET {(int(page) - 1) * int(page_size)} ROWS FETCH NEXT {page_size} ROWS ONLY""" \
+            if page and page_size else ""
 
-        if vehicle_number == '':
-            filter = f"""
-                    mtn.CompanyId = '{self.company_id}' """
-        else:
-            filter = f"""
-                    mtn.CompanyId = '{self.company_id}'
-                    AND mtn.VehicleNumber LIKE '%{vehicle_number}%'
-                    """
+        # filter based on vehicle_number
+        filter = f"""
+            mtn.CompanyId = '{self.company_id}'
+            {f"AND mtn.VehicleNumber LIKE '%{vehicle_number}%'" if vehicle_number else ''}
+        """
         count_query = self.cursor.execute(f'''
                 SELECT 
                 COUNT(DISTINCT (mtn.BusInformationId))
@@ -266,7 +263,7 @@ class ITMS:
                         lastOdo.EndODO
                     ORDER BY 
                         mtn.BusInformationId
-                    OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
+                    {pagination}
                     
                     ''')
 
@@ -289,28 +286,22 @@ class ITMS:
         return query_result , total_count
 
 
-    def get_charger_detail_list(self , choice , date= None , charger_number='' , page = 1 , page_size=15):
-        offset = (page - 1) * page_size
+    def get_charger_detail_list(self , choice , date= None , charger_number='' , page = None , page_size=None):
+       
+        date = date or datetime.date.today()
+        pagination = f"""OFFSET {(int(page) - 1) * int(page_size)} ROWS FETCH NEXT {page_size} ROWS ONLY""" \
+            if page and page_size else ""
         
+        filter = f"""
+             cm.CompanyId = '{self.company_id}'
+            {f"AND cm.ChargerNumber LIKE '%{charger_number}%'" if charger_number else ''}
+        """
 
-        if date is None:
-            date = datetime.date.today()
+        count_filter = f"""
+             cm.CompanyId = '{self.company_id}'
+            {f"AND ChargerNumber LIKE '%{charger_number}%'" if charger_number else ''}
+        """
 
-        if charger_number == '':
-            filter = f"""
-                cm.CompanyId = '{self.company_id}'
-            """
-
-            count_filter = f"""CompanyId = '{self.company_id}'"""
-        else:
-            filter = f"""
-                cm.CompanyId = '{self.company_id}'
-                AND cm.ChargerNumber LIKE '%{charger_number}%'
-            """
-            count_filter = f"""
-                CompanyId = '{self.company_id}' AND ChargerNumber LIKE '%{charger_number}%'
-
-                """
 
         
         if choice == 'Day':
@@ -381,7 +372,8 @@ class ITMS:
                 cm.SerialNumber
             ORDER BY 
                 cm.ChargerMasterId
-            OFFSET {offset} ROWS FETCH NEXT {page_size} ROWS ONLY
+            {pagination}
+            
         ''')
         
         query = self.cursor.fetchall()
@@ -508,7 +500,7 @@ class ITMS:
         self.cursor.execute(f'''
             SELECT COUNT(*)
             FROM MTN_BusInformation
-            WHERE CompanyId = '{self.company_id}' AND Status = 'Running';
+            WHERE CompanyId = '{self.company_id}'
         ''')
         return self.cursor.fetchone()[0]
 

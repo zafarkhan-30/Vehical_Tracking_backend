@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'database.apps.DatabaseConfig',
     'vehicle.apps.VehicleConfig',
-    
     'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
     'django_filters',

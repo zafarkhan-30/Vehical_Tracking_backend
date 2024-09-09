@@ -61,33 +61,39 @@ class GetRouteListForPartik(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
-        page = int(self.request.query_params.get('page'))
-        page_size = int(self.request.query_params.get('page_size'))
+        page = self.request.query_params.get('page')
+        page_size = self.request.query_params.get('page_size')
         date = self.request.query_params.get('date')
         route_number = self.request.query_params.get('route_number')
+
+        result = {"status": "error", "message": "Unable to retrieve buses list"}
+
         try:
             cursor = get_db_cursor()
-        except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-        itms = ITMS(cursor, user_group)
-        RouteList = itms.get_route_list(date ,route_number , page , page_size)
-        return Response(
-            {
+            itms = ITMS(cursor, user_group)
+            RouteList = itms.get_route_list(date ,route_number , page , page_size)
+        
+            result = {
                 "status": "success",
                 "data": {
-                    'total_count': RouteList[1] ,
-                    'total_page_count' : itms.custom_round_up(RouteList[1] / page_size), 
-                    "page": page , 
-                    "page_size": page_size , 
-                    'route_list' : RouteList[0 ],
+                    'buses_list': RouteList[0]
+                }
             }
-            } , status= status.HTTP_200_OK
-        )
+            if page and page_size:
+                total_count = RouteList[1]
+                result['data'].update({
+                    'total_count': total_count,
+                     'total_page_count': itms.custom_round_up(total_count / int(page_size)),
+                    'page': int(page),
+                    'page_size': int(page_size)
+                })
+                
+        except Exception as e:
+            result['message'] = str(e)
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result, status=status.HTTP_200_OK)
+                
         
 
 class GetScheduleBusesList(GenericAPIView):
@@ -130,7 +136,9 @@ class GetBussesList(GenericAPIView):
         # date = self.request.query_params.get('date')
         serializer = self.get_serializer(data = request.data)
         if serializer.is_valid():
-            date = serializer.validated_data.get('date')
+            date = self.request.query_params.get('date')
+            vehical_number = self.request.query_params.get('vehical')
+            
             try:
                 cursor = get_db_cursor()
             except Exception as e:
@@ -142,7 +150,7 @@ class GetBussesList(GenericAPIView):
                     )
             itms = ITMS(cursor , user_group)
         
-            buses_list = itms.get_buses_detail_list(date)
+            buses_list = itms.get_buses_detail_list(date , vehical_number)
             return Response(
                 {
                     "status": "success",
@@ -166,43 +174,45 @@ class GetBussesList(GenericAPIView):
 
 class GetBussesListForPartik(GenericAPIView):
     serializer_class = GetBussesListSerializer
-    permission_classes = [IsAuthenticated , IsUber | IsMBMT ]
-    # parser_classes = [MultiPartParser]
-
-
+    permission_classes = [IsAuthenticated, IsUber | IsMBMT]
+    
     def post(self, request, *args, **kwargs):
         user_group = str(request.user.groups.first())
-        # date = self.request.query_params.get('date')
-        
         date = self.request.query_params.get('date')
-        vehical_number = self.request.query_params.get('vehical')
-        page = int(self.request.query_params.get('page'))
-        page_size = int(self.request.query_params.get('page_size'))
+        vehicle_number = self.request.query_params.get('vehical')
+        page = self.request.query_params.get('page')
+        page_size = self.request.query_params.get('page_size')
+        
+       
+        result = {"status": "error", "message": "Unable to retrieve buses list"}
+        
         try:
             cursor = get_db_cursor()
-        except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-        itms = ITMS(cursor , user_group)
-    
-        buses_list = itms.get_buses_detail_list(date , vehical_number ,page, page_size)
-        print(buses_list[1] , page_size)
-        return Response(
-            {
+            itms = ITMS(cursor, user_group)
+            buses_list = itms.get_buses_detail_list(date, vehicle_number, page, page_size)
+            
+            result = {
                 "status": "success",
                 "data": {
-                    'total_count': buses_list[1] ,
-                    'total_page_count' :  itms.custom_round_up(buses_list[1] / page_size) , 
-                    "page": page , 
-                    "page_size": page_size , 
-                    'buses_list' : buses_list[0]
+                    'buses_list': buses_list[0]
+                }
             }
-            } , status= status.HTTP_200_OK
-        )
+            
+            if page and page_size:
+                total_count = buses_list[1]
+                result['data'].update({
+                    'total_count': total_count,
+                    'total_page_count': itms.custom_round_up(total_count / int(page_size)),
+                    'page': int(page),
+                    'page_size': int(page_size)
+                })
+                
+        except Exception as e:
+            result['message'] = str(e)
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result, status=status.HTTP_200_OK)
+
     
 
 
@@ -268,43 +278,36 @@ class GetChargersListForPartik(GenericAPIView):
         charger_name = self.request.query_params.get('charger_name')
         choice = self.request.query_params.get('choice')
         date = self.request.query_params.get('date')
-        page = int(self.request.query_params.get('page'))
-        page_size = int(self.request.query_params.get('page_size'))
+        page = self.request.query_params.get('page')
+        page_size = self.request.query_params.get('page_size')
+
+        result = {"status": "error", "message": "Unable to retrieve buses list"}
         try:
             cursor = get_db_cursor()
-        except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_400_BAD_REQUEST
-            )
-        itms = ITMS(cursor , user_group)
-        
-        Charger_list = itms.get_charger_detail_list(choice, date , charger_name , page , page_size)
-        return Response(
-            {
+            itms = ITMS(cursor , user_group)
+            Charger_list = itms.get_charger_detail_list(choice, date , charger_name , page , page_size)
+            result = {
                 "status": "success",
                 "data": {
-                    'total_count': Charger_list[1] ,
-                    'total_page_count' : itms.custom_round_up( Charger_list[1] / page_size) , 
-                    "page": page , 
-                    "page_size": page_size , 
-                    'Charger_list' : Charger_list[0],
+                    'Charger_list': Charger_list[0]
+                }
             }
-            } , status= status.HTTP_200_OK
-        )
-        # else:
-            
-            # key, value =list(serializer.errors.items())[0]
-            # error_message = key + ", " + value[0]
-            # return Response(
-            #     {
-            #         "status": "error",
-            #         "message": error_message
-            #     }, status=status.HTTP_400_BAD_REQUEST
-            # )
-    
+            if page and page_size:
+                total_count = Charger_list[1]
+                result['data'].update({
+                    'total_count': total_count,
+                     'total_page_count': itms.custom_round_up(total_count / int(page_size)),
+                    'page': int(page),
+                    'page_size': int(page_size)
+                })
+        except Exception as e:
+            result['message'] = str(e)
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(result, status=status.HTTP_200_OK)
+             
+
+        
 
 class GetChargerDetail(GenericAPIView):
     serializer_class = ChargerDetailSerializer
