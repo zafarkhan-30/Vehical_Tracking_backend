@@ -178,8 +178,8 @@ class ITMS:
                 LEFT JOIN 
                     MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
                 WHERE {filter}
-            ''')
-        total_count = count_query.fetchone()[0]
+            ''').fetchone()[0]
+        # total_count = count_query.fetchone()[0]
         query= self.cursor.execute(f'''
                         SELECT 
                         mtn.BusInformationId,
@@ -265,9 +265,9 @@ class ITMS:
                         mtn.BusInformationId
                     {pagination}
                     
-                    ''')
+                    ''').fetchall()
 
-        result = query.fetchall()
+        # result = query.fetchall()
         
         query_result =  [{'VehicleNumber': row.VehicleNumber , 
                         'BusInformationId' : row.BusInformationId , 
@@ -281,9 +281,9 @@ class ITMS:
                         'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
                         'TotalKm' : round(row.LastODO) ,
                         'total_Today_RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
-                            created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in result]
+                            created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in query]
         
-        return query_result , total_count
+        return query_result , count_query
 
 
     def get_charger_detail_list(self , choice , date= None , charger_number='' , page = None , page_size=None):
