@@ -64,64 +64,66 @@ class ITMS:
         filter = f"""
                  AND r.CompanyId = '{self.company_id}' 
                  {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
-                """
-        count_query = self.cursor.execute(f'''
-                                SELECT 
-                            count(DISTINCT (r.Code))
-                            FROM 
-                                OPR_Scheduling os
-                            JOIN 
-                                OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-                            JOIN 
-                                OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-                            JOIN 
-                                OPR_Route r ON o.RouteId = r.RouteId
-                            WHERE 
-                                 os.SchedulingDate = '{date}' {filter}''')
         
-        total_count = count_query.fetchone()[0]
-        
-        query = self.cursor.execute(f'''
-           SELECT 
-            r.RouteId AS RouteId,
-            r.Name AS Name,
-            r.Code AS Code,
-            os.SchedulingDate AS Date , 
-            COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
-            COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
-            SUM(o.TotalTrip) AS TotalTrip
-            FROM 
-                OPR_Scheduling os
-            JOIN 
-                OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-            JOIN 
-                OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-            JOIN 
-                OPR_Route r ON o.RouteId = r.RouteId
-            WHERE 
-                os.SchedulingDate = '{date}' {filter}
-            GROUP BY 
-                r.RouteId,
-                r.Name,
-                r.Code,
-                os.SchedulingDate 
-            ORDER BY 
-                r.RouteId
-            {pagination}
-        ''')
-        
-        result =query.fetchall()
-        self.cursor.close()
-        result = [{'route_id': row.RouteId, 'Name': row.Name, 
-                 'Code': row.Code , 
-                 'date' : row.Date ,
-                 'NumberOfBuses': row.NumberOfBuses , 
-                 'NumberOfSchedules' : row.NumberOfScheduleCodes,
-                 'TotalTrip' : row.TotalTrip , 
-                 'route_length' : random.randint(50,80) # need to update route length once the data is vailable
-                 } for row in result]
-        
-        return result , total_count
+             """
+        with self.cursor as cursor:
+            count_query = cursor.execute(f'''
+                                    SELECT 
+                                count(DISTINCT (r.Code))
+                                FROM 
+                                    OPR_Scheduling os
+                                JOIN 
+                                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                                JOIN 
+                                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                                JOIN 
+                                    OPR_Route r ON o.RouteId = r.RouteId
+                                WHERE 
+                                    os.SchedulingDate = '{date}' {filter}''')
+            
+            total_count = count_query.fetchone()[0]
+            
+            query = cursor.execute(f'''
+            SELECT 
+                r.RouteId AS RouteId,
+                r.Name AS Name,
+                r.Code AS Code,
+                os.SchedulingDate AS Date , 
+                COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
+                COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
+                SUM(o.TotalTrip) AS TotalTrip
+                FROM 
+                    OPR_Scheduling os
+                JOIN 
+                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                JOIN 
+                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                JOIN 
+                    OPR_Route r ON o.RouteId = r.RouteId
+                WHERE 
+                    os.SchedulingDate = '{date}' {filter}
+                GROUP BY 
+                    r.RouteId,
+                    r.Name,
+                    r.Code,
+                    os.SchedulingDate 
+                ORDER BY 
+                    r.RouteId
+                {pagination}
+            ''')
+            
+            result =query.fetchall()
+            
+            result = [{'route_id': row.RouteId, 'Name': row.Name, 
+                    'Code': row.Code , 
+                    'date' : row.Date ,
+                    'NumberOfBuses': row.NumberOfBuses , 
+                    'NumberOfSchedules' : row.NumberOfScheduleCodes,
+                    'TotalTrip' : row.TotalTrip , 
+                    'route_length' : random.randint(50,80) # need to update route length once the data is vailable
+                    } for row in result]
+            
+            return result , total_count
     def get_route_count(self):
         self.cursor.execute(f'''
             SELECT COUNT(DISTINCT Code) 
@@ -141,87 +143,11 @@ class ITMS:
             mtn.CompanyId = '{self.company_id}'
             {f"AND mtn.VehicleNumber LIKE '%{vehicle_number}%'" if vehicle_number else ''}
         """
-        count_query = self.cursor.execute(f'''
-                SELECT 
-                COUNT(DISTINCT (mtn.BusInformationId))
-                FROM 
-                    MTN_BusInformation mtn
-                LEFT JOIN 
-                    (
-                        SELECT 
-                            osd.BusInformationId,
-                            osd.SchedulingId,
-                            osd.StartODO,
-                            osd.EndODO,
-                            os.SchedulingDate,
-                            osd.ScheduleId  -- Include ScheduleId in subquery
-                    FROM 
-                        OPR_SchedulingDetails osd
-                    JOIN 
-                        OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
-                    WHERE 
-                        os.SchedulingDate = '{date}' 
-                            AND osd.IsDelete = 0
-                            AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
-                    ) osd ON mtn.BusInformationId = osd.BusInformationId
-                LEFT JOIN 
-                    (
-                        SELECT 
-                            BusInformationId, 
-                            MAX(EndODO) AS EndODO
-                        FROM 
-                            OPR_SchedulingDetails
-                        WHERE 
-                            IsDelete = 0
-                        GROUP BY 
-                            BusInformationId
-                    ) lastOdo ON mtn.BusInformationId = lastOdo.BusInformationId
-                LEFT JOIN 
-                    MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
-                WHERE {filter}
-            ''').fetchone()[0]
-        
-        # total_count = count_query.fetchone()[0]
-        query= self.cursor.execute(f'''
-                        SELECT 
-                        mtn.BusInformationId,
-                        mtn.BusCode,
-                        mtn.VehicleNumber,
-                        MAX(osd.SchedulingDate) AS LatestSchedulingDate,
-                        MIN(osd.StartODO) AS StartODO,
-                        MAX(osd.EndODO) AS EndODO,
-                        COALESCE(MAX(osd.EndODO) - MIN(osd.StartODO), 0) AS TotalKmRunToday,
-                        CASE WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
-                            ELSE 'Not Scheduled'
-                        END AS Status,
-                        COALESCE(lastOdo.EndODO, 0) AS LastODO,
-                        COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumed,
-                        COALESCE(SUM(CASE 
-                            WHEN bc.ChargingDate = '{date}' THEN bc.EnergyConsumption 
-                            ELSE 0 
-                        END), 0) AS TodayEnergyConsumption,
-                        SUM(CASE 
-                            WHEN bc.EndSOC - bc.StartSOC > 0 THEN bc.EndSOC - bc.StartSOC 
-                            ELSE 0 
-                        END) / 100.0 AS ChargingCycles,
-                        STUFF((
-                            SELECT ', ' + o2.Code
-                            FROM OPR_Schedule o2
-                            JOIN OPR_SchedulingDetails osd2 ON o2.ScheduleId = osd2.ScheduleId
-                            JOIN OPR_Scheduling os2 ON osd2.SchedulingId = os2.SchedulingId
-                            WHERE osd2.BusInformationId = mtn.BusInformationId
-                            AND os2.SchedulingDate = '{date}'
-                            AND o2.Shift = 'Morning'
-                            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS MorningScheduleCodes,
-                        STUFF((
-                            SELECT ', ' + o2.Code
-                            FROM OPR_Schedule o2
-                            JOIN OPR_SchedulingDetails osd2 ON o2.ScheduleId = osd2.ScheduleId
-                            JOIN OPR_Scheduling os2 ON osd2.SchedulingId = os2.SchedulingId
-                            WHERE osd2.BusInformationId = mtn.BusInformationId
-                            AND os2.SchedulingDate = '{date}'
-                            AND o2.Shift = 'Evening'
-                            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS EveningScheduleCodes
+
+        with self.cursor as cursor:
+            count_query = cursor.execute(f'''
+                    SELECT 
+                    COUNT(DISTINCT (mtn.BusInformationId))
                     FROM 
                         MTN_BusInformation mtn
                     LEFT JOIN 
@@ -233,12 +159,12 @@ class ITMS:
                                 osd.EndODO,
                                 os.SchedulingDate,
                                 osd.ScheduleId  -- Include ScheduleId in subquery
-                            FROM 
-                                OPR_SchedulingDetails osd
-                            JOIN 
-                                OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
-                            WHERE 
-                                os.SchedulingDate = '{date}' 
+                        FROM 
+                            OPR_SchedulingDetails osd
+                        JOIN 
+                            OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+                        WHERE 
+                            os.SchedulingDate = '{date}' 
                                 AND osd.IsDelete = 0
                                 AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
                         ) osd ON mtn.BusInformationId = osd.BusInformationId
@@ -256,37 +182,114 @@ class ITMS:
                         ) lastOdo ON mtn.BusInformationId = lastOdo.BusInformationId
                     LEFT JOIN 
                         MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
-                    WHERE 
-                        {filter}
-                    GROUP BY 
-                        mtn.BusInformationId,
-                        mtn.BusCode,
-                        mtn.VehicleNumber,
-                        lastOdo.EndODO
-                    ORDER BY 
-                        mtn.BusInformationId
-                    {pagination}
-                    
-                    ''').fetchall()
-        self.cursor.close()
-
-        # result = query.fetchall()
-        
-        query_result =  [{'VehicleNumber': row.VehicleNumber , 
-                        'BusInformationId' : row.BusInformationId , 
-                        'BusCode': row.BusCode ,
-                        'Status' : row.Status ,
-                        'MorningScheduleCodes': row.MorningScheduleCodes , 
-                        'EveningScheduleCodes': row.EveningScheduleCodes, 
-                        'TotalKmRunDay' : round(row.TotalKmRunToday),
-                        "Charging_cycle": round(row.ChargingCycles),
-                        'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
-                        'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
-                        'TotalKm' : round(row.LastODO) ,
-                        'total_Today_RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
-                            created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in query]
-        
-        return query_result , count_query
+                    WHERE {filter}
+                ''').fetchone()[0]
+            
+            # total_count = count_query.fetchone()[0]
+            query= cursor.execute(f'''
+                            SELECT 
+                            mtn.BusInformationId,
+                            mtn.BusCode,
+                            mtn.VehicleNumber,
+                            MAX(osd.SchedulingDate) AS LatestSchedulingDate,
+                            MIN(osd.StartODO) AS StartODO,
+                            MAX(osd.EndODO) AS EndODO,
+                            COALESCE(MAX(osd.EndODO) - MIN(osd.StartODO), 0) AS TotalKmRunToday,
+                            CASE WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
+                                ELSE 'Not Scheduled'
+                            END AS Status,
+                            COALESCE(lastOdo.EndODO, 0) AS LastODO,
+                            COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumed,
+                            COALESCE(SUM(CASE 
+                                WHEN bc.ChargingDate = '{date}' THEN bc.EnergyConsumption 
+                                ELSE 0 
+                            END), 0) AS TodayEnergyConsumption,
+                            SUM(CASE 
+                                WHEN bc.EndSOC - bc.StartSOC > 0 THEN bc.EndSOC - bc.StartSOC 
+                                ELSE 0 
+                            END) / 100.0 AS ChargingCycles,
+                            STUFF((
+                                SELECT ', ' + o2.Code
+                                FROM OPR_Schedule o2
+                                JOIN OPR_SchedulingDetails osd2 ON o2.ScheduleId = osd2.ScheduleId
+                                JOIN OPR_Scheduling os2 ON osd2.SchedulingId = os2.SchedulingId
+                                WHERE osd2.BusInformationId = mtn.BusInformationId
+                                AND os2.SchedulingDate = '{date}'
+                                AND o2.Shift = 'Morning'
+                                FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS MorningScheduleCodes,
+                            STUFF((
+                                SELECT ', ' + o2.Code
+                                FROM OPR_Schedule o2
+                                JOIN OPR_SchedulingDetails osd2 ON o2.ScheduleId = osd2.ScheduleId
+                                JOIN OPR_Scheduling os2 ON osd2.SchedulingId = os2.SchedulingId
+                                WHERE osd2.BusInformationId = mtn.BusInformationId
+                                AND os2.SchedulingDate = '{date}'
+                                AND o2.Shift = 'Evening'
+                                FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 2, '') AS EveningScheduleCodes
+                        FROM 
+                            MTN_BusInformation mtn
+                        LEFT JOIN 
+                            (
+                                SELECT 
+                                    osd.BusInformationId,
+                                    osd.SchedulingId,
+                                    osd.StartODO,
+                                    osd.EndODO,
+                                    os.SchedulingDate,
+                                    osd.ScheduleId  -- Include ScheduleId in subquery
+                                FROM 
+                                    OPR_SchedulingDetails osd
+                                JOIN 
+                                    OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId
+                                WHERE 
+                                    os.SchedulingDate = '{date}' 
+                                    AND osd.IsDelete = 0
+                                    AND (os.IsDelete = 0 OR os.IsDelete IS NULL)
+                            ) osd ON mtn.BusInformationId = osd.BusInformationId
+                        LEFT JOIN 
+                            (
+                                SELECT 
+                                    BusInformationId, 
+                                    MAX(EndODO) AS EndODO
+                                FROM 
+                                    OPR_SchedulingDetails
+                                WHERE 
+                                    IsDelete = 0
+                                GROUP BY 
+                                    BusInformationId
+                            ) lastOdo ON mtn.BusInformationId = lastOdo.BusInformationId
+                        LEFT JOIN 
+                            MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
+                        WHERE 
+                            {filter}
+                        GROUP BY 
+                            mtn.BusInformationId,
+                            mtn.BusCode,
+                            mtn.VehicleNumber,
+                            lastOdo.EndODO
+                        ORDER BY 
+                            mtn.BusInformationId
+                        {pagination}
+                        
+                        ''').fetchall()
+            
+            # result = query.fetchall()
+            
+            query_result =  [{'VehicleNumber': row.VehicleNumber , 
+                            'BusInformationId' : row.BusInformationId , 
+                            'BusCode': row.BusCode ,
+                            'Status' : row.Status ,
+                            'MorningScheduleCodes': row.MorningScheduleCodes , 
+                            'EveningScheduleCodes': row.EveningScheduleCodes, 
+                            'TotalKmRunDay' : round(row.TotalKmRunToday),
+                            "Charging_cycle": round(row.ChargingCycles),
+                            'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
+                            'TotalEnergyConsumed_kwH' : round(row.TotalEnergyConsumed),
+                            'TotalKm' : round(row.LastODO) ,
+                            'total_Today_RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
+                                created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in query]
+            
+            return query_result , count_query
 
 
     def get_charger_detail_list(self , choice , date= None , charger_number='' , page = None , page_size=None):
@@ -325,81 +328,81 @@ class ITMS:
                 CompanyId = '{self.company_id}' AND ChargerNumber LIKE '%{charger_number}%'
 
                 """
-        
-        count_query = self.cursor.execute(f"""SELECT 
-            COUNT(DISTINCT(ChargerMasterId)) AS totalcount
-            FROM 
-                MTN_ChargerMaster 
-           
-            WHERE {count_filter}
-                 """)
-        total_count = count_query.fetchone()  
-        # print(total_count)
-        
-        self.cursor.execute(f'''
-                SELECT 
-                cm.ChargerMasterId,
-                cm.ChargerNumber,
-                cm.Status,
-                cm.SerialNumber,
-                MAX(bc.ChargingDate) AS LastChargingDate,
-                COALESCE(COUNT(bc.BusInformationId), 0) AS TotalBusesChargedToday,
-                COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumedToday,
-                COALESCE(SUM(CAST(bc.SessionTime AS int)) / 60.00, 0) AS TotalOperationalHoursToday,
-                (
-                    SELECT COUNT(bc2.BusInformationId)
-                    FROM MTN_BusCharging bc2
-                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-                ) AS TotalBusesChargedTillDate,
-                (
-                    SELECT SUM(bc2.EnergyConsumption)
-                    FROM MTN_BusCharging bc2
-                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-                ) AS TotalEnergyConsumedTillDate,
-                (
-                    SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
-                    FROM MTN_BusCharging bc2
-                    WHERE bc2.ChargerMasterId = cm.ChargerMasterId
-                ) AS TotalOperationalHoursTillDate
-            FROM 
-                MTN_ChargerMaster cm
-            LEFT JOIN 
-                MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
-                AND bc.ChargingDate = '{date}' {time_condition}
-            WHERE 
-                {filter}
-            GROUP BY 
-                cm.ChargerMasterId, 
-                cm.ChargerNumber, 
-                cm.Status,
-                cm.SerialNumber
-            ORDER BY 
-                cm.ChargerMasterId
-            {pagination}
+        with self.cursor as cursor:
+            count_query = cursor.execute(f"""SELECT 
+                COUNT(DISTINCT(ChargerMasterId)) AS totalcount
+                FROM 
+                    MTN_ChargerMaster 
             
-        ''')
-        
-        query = self.cursor.fetchall()
-        self.cursor.close()
-        query_result = [{
-            "ChargerNumber" : row.ChargerNumber , 
-            "id" : row.ChargerMasterId,
-            'CPO_name' : 'Klick-Watt' , 
-            'Charger_name'  : 'Star Charge' , 
-            "Status" : row.Status,
-            'Latest_data': {
-                # "date" : row.LastChargingDate ,
-                'BusesCharged' : row.TotalBusesChargedToday,
-                'EnergyConsumed' : round(row.TotalEnergyConsumedToday),
-                'OperationalHours' : row.TotalOperationalHoursToday
-            },
-            'Total' : {
-                'BusesCharged': row.TotalBusesChargedTillDate ,
-                'EnergyConsumed' : (row.TotalEnergyConsumedTillDate),
-                'OperationalHours' : (row.TotalOperationalHoursTillDate)
-            }, 
-        }   for row in query]
-        return query_result , total_count[0]
+                WHERE {count_filter}
+                    """)
+            total_count = count_query.fetchone()  
+            # print(total_count)
+            
+            query = cursor.execute(f'''
+                    SELECT 
+                    cm.ChargerMasterId,
+                    cm.ChargerNumber,
+                    cm.Status,
+                    cm.SerialNumber,
+                    MAX(bc.ChargingDate) AS LastChargingDate,
+                    COALESCE(COUNT(bc.BusInformationId), 0) AS TotalBusesChargedToday,
+                    COALESCE(SUM(bc.EnergyConsumption), 0) AS TotalEnergyConsumedToday,
+                    COALESCE(SUM(CAST(bc.SessionTime AS int)) / 60.00, 0) AS TotalOperationalHoursToday,
+                    (
+                        SELECT COUNT(bc2.BusInformationId)
+                        FROM MTN_BusCharging bc2
+                        WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                    ) AS TotalBusesChargedTillDate,
+                    (
+                        SELECT SUM(bc2.EnergyConsumption)
+                        FROM MTN_BusCharging bc2
+                        WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                    ) AS TotalEnergyConsumedTillDate,
+                    (
+                        SELECT SUM(CAST(bc2.SessionTime AS int)) / 60.00
+                        FROM MTN_BusCharging bc2
+                        WHERE bc2.ChargerMasterId = cm.ChargerMasterId
+                    ) AS TotalOperationalHoursTillDate
+                FROM 
+                    MTN_ChargerMaster cm
+                LEFT JOIN 
+                    MTN_BusCharging bc ON cm.ChargerMasterId = bc.ChargerMasterId 
+                    AND bc.ChargingDate = '{date}' {time_condition}
+                WHERE 
+                    {filter}
+                GROUP BY 
+                    cm.ChargerMasterId, 
+                    cm.ChargerNumber, 
+                    cm.Status,
+                    cm.SerialNumber
+                ORDER BY 
+                    cm.ChargerMasterId
+                {pagination}
+                
+            ''')
+            
+            query = query.fetchall()
+            
+            query_result = [{
+                "ChargerNumber" : row.ChargerNumber , 
+                "id" : row.ChargerMasterId,
+                'CPO_name' : 'Klick-Watt' , 
+                'Charger_name'  : 'Star Charge' , 
+                "Status" : row.Status,
+                'Latest_data': {
+                    # "date" : row.LastChargingDate ,
+                    'BusesCharged' : row.TotalBusesChargedToday,
+                    'EnergyConsumed' : round(row.TotalEnergyConsumedToday),
+                    'OperationalHours' : row.TotalOperationalHoursToday
+                },
+                'Total' : {
+                    'BusesCharged': row.TotalBusesChargedTillDate ,
+                    'EnergyConsumed' : (row.TotalEnergyConsumedTillDate),
+                    'OperationalHours' : (row.TotalOperationalHoursTillDate)
+                }, 
+            }   for row in query]
+            return query_result , total_count[0]
       
     def get_charger_Details(self, choice , date , charger_id):
         if choice == 'Day':
