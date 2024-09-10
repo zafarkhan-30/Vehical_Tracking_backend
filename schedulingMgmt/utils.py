@@ -109,8 +109,9 @@ class ITMS:
                 r.RouteId
             {pagination}
         ''')
-        print(query)
+        
         result =query.fetchall()
+        self.cursor.close()
         result = [{'route_id': row.RouteId, 'Name': row.Name, 
                  'Code': row.Code , 
                  'date' : row.Date ,
@@ -179,6 +180,7 @@ class ITMS:
                     MTN_BusCharging bc ON mtn.BusInformationId = bc.BusInformationId
                 WHERE {filter}
             ''').fetchone()[0]
+        
         # total_count = count_query.fetchone()[0]
         query= self.cursor.execute(f'''
                         SELECT 
@@ -266,6 +268,7 @@ class ITMS:
                     {pagination}
                     
                     ''').fetchall()
+        self.cursor.close()
 
         # result = query.fetchall()
         
@@ -377,6 +380,7 @@ class ITMS:
         ''')
         
         query = self.cursor.fetchall()
+        self.cursor.close()
         query_result = [{
             "ChargerNumber" : row.ChargerNumber , 
             "id" : row.ChargerMasterId,

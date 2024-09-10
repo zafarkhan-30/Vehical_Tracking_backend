@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'database.apps.DatabaseConfig',
     'vehicle.apps.VehicleConfig',
+    # 'itmsoperation.apps.ItmsoperationConfig',
     'schedulingMgmt.apps.SchedulingmgmtConfig',
     'drf_yasg',
     'django_filters',
@@ -115,6 +116,18 @@ DATABASES = {
         'HOST': env("PROD_DATABASE_HOST"),
         'PORT': env("PROD_DATABASE_PORT"),
     },
+    'itms': {
+        'ENGINE': 'mssql',
+        'NAME': env("ITMS_DATABASE_NAME"),
+        'USER': env("ITMS_USERNAME"),
+        'PASSWORD': env("ITMS_PASSWORD"),
+        'HOST': env("ITMS_SERVER"),
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            # 'extra_params': 'TrustServerCertificate=yes;',  # Optional for certificate
+        },
+    }
 
 }
 
@@ -143,8 +156,8 @@ DATABASES = {
 # }
 
 
-ITMS_SERVER = env("ITMS_SERVER")
-ITMS_DRIVER = env("ITMS_DRIVER")
+ITMS_SERVER =env("ITMS_SERVER")
+ITMS_DRIVER =env("ITMS_DRIVER")
 ITMS_PASSWORD =env("ITMS_PASSWORD")
 ITMS_USERNAME =env("ITMS_USERNAME")
 ITMS_DATABASE_NAME = env("ITMS_DATABASE_NAME")
