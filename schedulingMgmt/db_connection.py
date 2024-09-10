@@ -7,7 +7,7 @@ class DatabaseConnection:
         self.username = username
         self.password = password
         self.driver = driver
-        self.connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+        self.connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};MARS_Connection=Yes'
         self.connection = None
 
     def connect(self):
