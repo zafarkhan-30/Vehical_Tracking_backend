@@ -66,8 +66,8 @@ class ITMS:
                  {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
         
              """
-        with self.cursor.connection.cursor() as count_cursor:
-            count_query = count_cursor.execute(f'''
+        with self.cursor as cursor:
+            count_query = cursor.execute(f'''
                                     SELECT 
                                 count(DISTINCT (r.Code))
                                 FROM 
@@ -81,9 +81,10 @@ class ITMS:
                                 WHERE 
                                     os.SchedulingDate = '{date}' {filter}''')
             total_count = count_query.fetchone()[0]
-        self.cursor.connection.commit()
+        
             
-        with self.cursor.connection.cursor() as query_cursor:
+        with self.cursor as query_cursor:
+          
             query = query_cursor.execute(f'''
                 SELECT 
                     r.RouteId AS RouteId,
@@ -114,7 +115,7 @@ class ITMS:
             ''')
 
             result = query.fetchall()
-        self.cursor.connection.commit()
+        # self.cursor.connection.commit()
 
         result = [{'route_id': row.RouteId, 'Name': row.Name, 
                 'Code': row.Code, 
