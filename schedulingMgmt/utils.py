@@ -66,8 +66,8 @@ class ITMS:
                  {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
         
              """
-        with self.cursor as cursor:
-            count_query = cursor.execute(f'''
+        with self.cursor.connection.cursor() as count_cursor:
+            count_query = count_cursor.execute(f'''
                                     SELECT 
                                 count(DISTINCT (r.Code))
                                 FROM 
@@ -80,15 +80,15 @@ class ITMS:
                                     OPR_Route r ON o.RouteId = r.RouteId
                                 WHERE 
                                     os.SchedulingDate = '{date}' {filter}''')
-            
             total_count = count_query.fetchone()[0]
             
-            query = cursor.execute(f'''
+        with self.cursor.connection.cursor() as query_cursor:
+            query = query_cursor.execute(f'''
             SELECT 
                 r.RouteId AS RouteId,
                 r.Name AS Name,
                 r.Code AS Code,
-                os.SchedulingDate AS Date , 
+                os.SchedulingDate AS Date, 
                 COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
                 COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
                 SUM(o.TotalTrip) AS TotalTrip
@@ -111,19 +111,20 @@ class ITMS:
                     r.RouteId
                 {pagination}
             ''')
-            
-            result =query.fetchall()
-            
-            result = [{'route_id': row.RouteId, 'Name': row.Name, 
-                    'Code': row.Code , 
-                    'date' : row.Date ,
-                    'NumberOfBuses': row.NumberOfBuses , 
-                    'NumberOfSchedules' : row.NumberOfScheduleCodes,
-                    'TotalTrip' : row.TotalTrip , 
-                    'route_length' : random.randint(50,80) # need to update route length once the data is vailable
-                    } for row in result]
-            
-            return result , total_count
+
+            result = query.fetchall()
+
+        result = [{'route_id': row.RouteId, 'Name': row.Name, 
+                'Code': row.Code, 
+                'date': row.Date,
+                'NumberOfBuses': row.NumberOfBuses, 
+                'NumberOfSchedules': row.NumberOfScheduleCodes,
+                'TotalTrip': row.TotalTrip, 
+                'route_length': random.randint(50, 80)}  # Replace this with actual route length data
+                for row in result]
+
+        return result, total_count
+    
     def get_route_count(self):
         self.cursor.execute(f'''
             SELECT COUNT(DISTINCT Code) 
