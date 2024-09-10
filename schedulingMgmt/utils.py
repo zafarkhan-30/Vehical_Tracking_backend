@@ -81,38 +81,40 @@ class ITMS:
                                 WHERE 
                                     os.SchedulingDate = '{date}' {filter}''')
             total_count = count_query.fetchone()[0]
+        self.cursor.connection.commit()
             
         with self.cursor.connection.cursor() as query_cursor:
             query = query_cursor.execute(f'''
-            SELECT 
-                r.RouteId AS RouteId,
-                r.Name AS Name,
-                r.Code AS Code,
-                os.SchedulingDate AS Date, 
-                COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
-                COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
-                SUM(o.TotalTrip) AS TotalTrip
-                FROM 
-                    OPR_Scheduling os
-                JOIN 
-                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-                JOIN 
-                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-                JOIN 
-                    OPR_Route r ON o.RouteId = r.RouteId
-                WHERE 
-                    os.SchedulingDate = '{date}' {filter}
-                GROUP BY 
-                    r.RouteId,
-                    r.Name,
-                    r.Code,
-                    os.SchedulingDate 
-                ORDER BY 
-                    r.RouteId
+                SELECT 
+                    r.RouteId AS RouteId,
+                    r.Name AS Name,
+                    r.Code AS Code,
+                    os.SchedulingDate AS Date, 
+                    COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
+                    COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
+                    SUM(o.TotalTrip) AS TotalTrip
+                    FROM 
+                        OPR_Scheduling os
+                    JOIN 
+                        OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                    JOIN 
+                        OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                    JOIN 
+                        OPR_Route r ON o.RouteId = r.RouteId
+                    WHERE 
+                        os.SchedulingDate = '{date}' {filter}
+                    GROUP BY 
+                        r.RouteId,
+                        r.Name,
+                        r.Code,
+                        os.SchedulingDate 
+                    ORDER BY 
+                        r.RouteId
                 {pagination}
             ''')
 
             result = query.fetchall()
+        self.cursor.connection.commit()
 
         result = [{'route_id': row.RouteId, 'Name': row.Name, 
                 'Code': row.Code, 
