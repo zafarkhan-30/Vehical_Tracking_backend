@@ -33,16 +33,20 @@ def get_db_cursor():
 
 
 class ITMS:
-    def __init__(self, cursor, user_group):
-        """
-            Initialize an instance of ITMS class.
-            Parameters:
-            cursor (object): A database cursor object to execute SQL queries.
-            user_group (str): The user group for which the ITMS instance is being created.
-            Returns:
-            None
-        """
-        self.cursor = cursor
+    # def __init__(self, cursor, user_group):
+    #     """
+    #         Initialize an instance of ITMS class.
+    #         Parameters:
+    #         cursor (object): A database cursor object to execute SQL queries.
+    #         user_group (str): The user group for which the ITMS instance is being created.
+    #         Returns:
+    #         None
+    #     """
+    #     self.cursor = cursor
+    #     self.company_id = self.get_company_id(user_group)
+
+    def __init__(self, db_config, user_group):
+        self.db_connection = DatabaseConnection(**db_config)
         self.company_id = self.get_company_id(user_group)
 
 
@@ -66,26 +70,30 @@ class ITMS:
                  {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
         
              """
-        with self.cursor as cursor:
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+
+        try:
+            # Count query
             count_query = cursor.execute(f'''
-                                    SELECT 
-                                count(DISTINCT (r.Code))
-                                FROM 
-                                    OPR_Scheduling os
-                                JOIN 
-                                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-                                JOIN 
-                                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-                                JOIN 
-                                    OPR_Route r ON o.RouteId = r.RouteId
-                                WHERE 
-                                    os.SchedulingDate = '{date}' {filter}''')
-            total_count = count_query.fetchone()[0]
-        
-            
-        with self.cursor as query_cursor:
-          
-            query = query_cursor.execute(f'''
+                SELECT 
+                    COUNT(DISTINCT (r.Code))
+                FROM 
+                    OPR_Scheduling os
+                JOIN 
+                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                JOIN 
+                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                JOIN 
+                    OPR_Route r ON o.RouteId = r.RouteId
+                WHERE 
+                    os.SchedulingDate = '{date}' {filter}
+            ''').fetchone()[0]
+
+            # Main query
+            query = cursor.execute(f'''
                 SELECT 
                     r.RouteId AS RouteId,
                     r.Name AS Name,
@@ -94,48 +102,68 @@ class ITMS:
                     COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
                     COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
                     SUM(o.TotalTrip) AS TotalTrip
-                    FROM 
-                        OPR_Scheduling os
-                    JOIN 
-                        OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-                    JOIN 
-                        OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-                    JOIN 
-                        OPR_Route r ON o.RouteId = r.RouteId
-                    WHERE 
-                        os.SchedulingDate = '{date}' {filter}
-                    GROUP BY 
-                        r.RouteId,
-                        r.Name,
-                        r.Code,
-                        os.SchedulingDate 
-                    ORDER BY 
-                        r.RouteId
+                FROM 
+                    OPR_Scheduling os
+                JOIN 
+                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
+                JOIN 
+                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
+                JOIN 
+                    OPR_Route r ON o.RouteId = r.RouteId
+                WHERE 
+                    os.SchedulingDate = '{date}' {filter}
+                GROUP BY 
+                    r.RouteId,
+                    r.Name,
+                    r.Code,
+                    os.SchedulingDate 
+                ORDER BY 
+                    r.RouteId
                 {pagination}
-            ''')
+            ''').fetchall()
 
-            result = query.fetchall()
-        # self.cursor.connection.commit()
+            result = [{'route_id': row.RouteId, 'Name': row.Name, 
+                       'Code': row.Code, 
+                       'date': row.Date,
+                       'NumberOfBuses': row.NumberOfBuses, 
+                       'NumberOfSchedules': row.NumberOfScheduleCodes,
+                       'TotalTrip': row.TotalTrip, 
+                       'route_length': random.randint(50, 80)}  # Replace this with actual route length data
+                      for row in query]
 
-        result = [{'route_id': row.RouteId, 'Name': row.Name, 
-                'Code': row.Code, 
-                'date': row.Date,
-                'NumberOfBuses': row.NumberOfBuses, 
-                'NumberOfSchedules': row.NumberOfScheduleCodes,
-                'TotalTrip': row.TotalTrip, 
-                'route_length': random.randint(50, 80)}  # Replace this with actual route length data
-                for row in result]
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
 
-        return result, total_count
-    
+        return result, count_query
+        
+
+
     def get_route_count(self):
-        self.cursor.execute(f'''
-            SELECT COUNT(DISTINCT Code) 
-            FROM OPR_Route
-            WHERE CompanyId = '{self.company_id}';
-        ''')
-        return self.cursor.fetchone()[0]
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            query = cursor.execute(f'''
+                SELECT COUNT(DISTINCT Code) 
+                FROM OPR_Route
+                WHERE CompanyId = '{self.company_id}';
+            ''')
+            
+            count = query.fetchone()[0]
 
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+
+        return count
     def get_buses_detail_list(self , date = None, vehicle_number = '' , page = None , page_size=None ):
         date = date or datetime.date.today()  # Use today's date if no date is provided
 
@@ -147,8 +175,12 @@ class ITMS:
             mtn.CompanyId = '{self.company_id}'
             {f"AND mtn.VehicleNumber LIKE '%{vehicle_number}%'" if vehicle_number else ''}
         """
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
 
-        with self.cursor as cursor:
+        try:
             count_query = cursor.execute(f'''
                     SELECT 
                     COUNT(DISTINCT (mtn.BusInformationId))
@@ -292,8 +324,14 @@ class ITMS:
                             'TotalKm' : round(row.LastODO) ,
                             'total_Today_RegenerationEnergy' : MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
                                 created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in query]
-            
-            return query_result , count_query
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+
+        return query_result , count_query
 
 
     def get_charger_detail_list(self , choice , date= None , charger_number='' , page = None , page_size=None):
@@ -332,7 +370,14 @@ class ITMS:
                 CompanyId = '{self.company_id}' AND ChargerNumber LIKE '%{charger_number}%'
 
                 """
-        with self.cursor as cursor:
+        
+
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+
+        try:
             count_query = cursor.execute(f"""SELECT 
                 COUNT(DISTINCT(ChargerMasterId)) AS totalcount
                 FROM 
@@ -341,7 +386,7 @@ class ITMS:
                 WHERE {count_filter}
                     """)
             total_count = count_query.fetchone()  
-            # print(total_count)
+            # #print(total_count)
             
             query = cursor.execute(f'''
                     SELECT 
@@ -406,7 +451,14 @@ class ITMS:
                     'OperationalHours' : (row.TotalOperationalHoursTillDate)
                 }, 
             }   for row in query]
-            return query_result , total_count[0]
+
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+        return query_result , total_count[0]
       
     def get_charger_Details(self, choice , date , charger_id):
         if choice == 'Day':
@@ -508,15 +560,34 @@ class ITMS:
 
 
     def get_buses_count(self):
-        self.cursor.execute(f'''
-            SELECT COUNT(*)
-            FROM MTN_BusInformation
-            WHERE CompanyId = '{self.company_id}'
-        ''')
-        return self.cursor.fetchone()[0]
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            query = cursor.execute(f'''
+                SELECT COUNT(*)
+                FROM MTN_BusInformation
+                WHERE CompanyId = '{self.company_id}'
+            ''')
+            count = query.fetchone()[0]
+
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+
+        return count
 
     def get_Operational_hours(self):
-        self.cursor.execute(f'''
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            query = cursor.execute(f'''
             SELECT 
             SUM( CASE 
                 WHEN TRY_CAST(StartTime AS TIME) IS NOT NULL AND TRY_CAST(EndTime AS TIME) IS NOT NULL THEN
@@ -533,28 +604,68 @@ class ITMS:
             END) / 60.00 AS DurationInHours
         FROM OPR_SchedulingDetailsTrip;''')
 
-        return round(self.cursor.fetchone()[0]) 
+            count = query.fetchone()[0]
+
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+
+        return count
 
     def get_charger_count(self):
-        self.cursor.execute(f'''
-                        SELECT 
-                            COUNT(*) as ChargerCount
-                        FROM MTN_ChargerMaster
-                        WHERE CompanyId = '{self.company_id}';
-                        ''')
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            query = cursor.execute(f'''
+                            SELECT 
+                                COUNT(*) as ChargerCount
+                            FROM MTN_ChargerMaster
+                            WHERE CompanyId = '{self.company_id}';
+                            ''')
+            
+            count = query.fetchone()[0]
+
+        finally:
+            # Close cursor and connection
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+
+        return count
         
-        return self.cursor.fetchone()[0]
-    
     def get_charging_hours(self):
-        self.cursor.execute(f'''
-            SELECT SUM(CAST(SessionTime AS int)) / 60.00 as TotalChargingHours
-            FROM MTN_BusCharging ;
-        ''')
-        return round(self.cursor.fetchone()[0])
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            cursor.execute(f'''
+                SELECT SUM(CAST(SessionTime AS int)) / 60.00 as TotalChargingHours
+                FROM MTN_BusCharging ;
+            ''')
+            count = round(cursor.fetchone()[0])
+        finally:
+            
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+        return count
     
 
     def get_trip_count(self, vehicle_number=None, start_date=None, end_date=None):
-        query = f'''
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            query = f'''
             SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId) AS TotalTrips
             FROM MTN_BusInformation
             INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
@@ -562,27 +673,49 @@ class ITMS:
             INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
             WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
         '''
-        if vehicle_number and start_date and end_date:
-            query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+            if vehicle_number and start_date and end_date:
+                query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
 
-        self.cursor.execute(query)
-        return self.cursor.fetchone()[0]
+            cursor.execute(query)
+            count = cursor.fetchone()[0]
+        finally:
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+            
+        return count
 
     def get_distance_km(self, vehicle_number=None, start_date=None, end_date=None):
-        query = f'''
-            SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM) AS TotalKms
-            FROM MTN_BusInformation
-            INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
-            INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
-            INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-            WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
-        '''
-        if vehicle_number and start_date and end_date:
-            query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+        self.db_connection.connect()
+        connection = self.db_connection.get_connection()
+        #print(connection , "connection")
+        cursor = connection.cursor()
+        try:
+            query = f'''
+                SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM) AS TotalKms
+                FROM MTN_BusInformation
+                INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+                INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+                INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+                WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
+            '''
+            if vehicle_number and start_date and end_date:
+                query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
 
-        self.cursor.execute(query)
-        distance_km = self.cursor.fetchone()[0] or 0
+
+            count = cursor.execute(query)
+            distance_km = count.fetchone()[0] or 0
+        finally:
+            cursor.close()
+            #print("cursor close")
+            self.db_connection.close_connection()
+            #print("connection close")
+            
         return round(distance_km)
+        # self.cursor.execute(query)
+        # distance_km = self.cursor.fetchone()[0] or 0
+        # return round(distance_km)
 
 
 class Vehicletracking:

@@ -36,4 +36,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('vehical/', include('vehicle.urls')),
     path('schedule/', include('schedulingMgmt.urls')),
+    # path('itms/', include('itmsoperation.urls')),
 ]

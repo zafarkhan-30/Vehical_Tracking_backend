@@ -10,7 +10,7 @@ from database.models import *
 from rest_framework.parsers import MultiPartParser
 from VehicalTracking import settings
 from vehicle.utils import format_error_message , error_simplifier
-
+from .utils import db_config
 
 
 
@@ -29,14 +29,14 @@ class GetRouteList(GenericAPIView):
         result = {"status": "error", "message": "Unable to retrieve buses list"}
 
         try:
-            cursor = get_db_cursor()
-            itms = ITMS(cursor, user_group)
+            # cursor = get_db_cursor() 
+            itms = ITMS(db_config , user_group)
             RouteList = itms.get_route_list(date ,route_number , page , page_size)
         
             result = {
                 "status": "success",
                 "data": {
-                    'buses_list': RouteList[0]
+                    'Route_list': RouteList[0]
                 }
             }
             if page and page_size:
@@ -101,9 +101,9 @@ class GetBussesList(GenericAPIView):
         result = {"status": "error", "message": "Unable to retrieve buses list"}
         
         try:
-            cursor = get_db_cursor()
+            # cursor = get_db_cursor()
             
-            itms = ITMS(cursor, user_group)
+            itms = ITMS(db_config , user_group)
             buses_list = itms.get_buses_detail_list(date, vehicle_number, page, page_size)
             # print (type(total_count))
             result = {
@@ -150,7 +150,7 @@ class GetChargersList(GenericAPIView):
         result = {"status": "error", "message": "Unable to retrieve buses list"}
         try:
             cursor = get_db_cursor()
-            itms = ITMS(cursor , user_group)
+            itms = ITMS(db_config , user_group)
             Charger_list = itms.get_charger_detail_list(choice, date , charger_name , page , page_size)
             result = {
                 "status": "success",
@@ -277,7 +277,7 @@ class GetdashboardCountView(GenericAPIView):
                         "message": str(e)
                     }, status=status.HTTP_400_BAD_REQUEST
                 )
-        itms = ITMS(cursor , user_group)
+        itms = ITMS(db_config , user_group)
         # bus_deployed = itms.get_buses_count()
         trip_count = itms.get_trip_count(vehicalNumber,start_date,end_date )
         distance = itms.get_distance_km(vehicalNumber,start_date,end_date )
