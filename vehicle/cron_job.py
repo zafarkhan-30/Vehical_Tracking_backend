@@ -8,7 +8,7 @@ from django.conf import settings
 
 
 def run_device_details_view():
-    url = "https://timscan.transvolt.in/vehical/post-Master-Device-Data/"
+    url = "https://timscan.transvolt.in/api/vehical/post-Master-Device-Data/"
     headers = {"Content-Type": "application/json"}
     log_file = "/tmp/cron_job_output.log"
 
