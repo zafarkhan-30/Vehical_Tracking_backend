@@ -601,7 +601,7 @@ class ITMS:
             self.db_connection.close_connection()
             # print("connection close")
 
-        return count
+        return round(count)
 
     def get_charger_count(self):
         self.db_connection.connect()
