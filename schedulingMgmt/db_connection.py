@@ -25,7 +25,7 @@ class DatabaseConnection:
         if self.connection:
             self.connection.close()
             self.connection = None
-            print("Database connection closed.")
+            # print("Database connection closed.")
 
 
 

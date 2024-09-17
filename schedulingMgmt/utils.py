@@ -23,16 +23,6 @@ db_config = {
 
 db_connection = DatabaseConnection(**db_config)
 
-
-def get_db_cursor():
-    try:
-        connection = db_connection.get_connection()
-        return connection.cursor()
-    except Exception as e:
-        return Response({"status": "error", "message": "Connection error, Try again in few minutes",
-                         "error_message": str(e)}, status=400)
-
-
 class ITMS:
 
     def __init__(self, db_config, user_group):
@@ -41,18 +31,6 @@ class ITMS:
 
     def custom_round_up(self, n):
         return math.ceil(n)
-
-    def custom_round_up(self, n):  
-        """
-        This function rounds up a given number to the nearest integer.#+
-
-        Parameters:#+
-        n (float): The number to be rounded up.#+
-
-        Returns:#+
-        int: The rounded up number.#+
-        """  
-        return math.ceil(n)  
 
     def get_company_id(self, user_group):
         if user_group == 'MBMT':
@@ -138,29 +116,6 @@ class ITMS:
             self.db_connection.close_connection()
 
         return result, count_query
-
-    def get_route_count(self):
-        self.db_connection.connect()
-        connection = self.db_connection.get_connection()
-        # print(connection , "connection")
-        cursor = connection.cursor()
-        try:
-            query = cursor.execute(f'''
-                SELECT COUNT(DISTINCT Code) 
-                FROM OPR_Route
-                WHERE CompanyId = '{self.company_id}';
-            ''')
-
-            count = query.fetchone()[0]
-
-        finally:
-            # Close cursor and connection
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
-
-        return count
 
     def get_buses_detail_list(self, date=None, vehicle_number='', page=None, page_size=None):
         date = date or datetime.date.today()  # Use today's date if no date is provided
@@ -547,161 +502,270 @@ class ITMS:
 
         return buses_list
 
-    def get_buses_count(self):
+
+
+# dashboard API Functions
+
+    # def get_route_count(self):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         query = cursor.execute(f'''
+    #             SELECT COUNT(DISTINCT Code) 
+    #             FROM OPR_Route
+    #             WHERE CompanyId = '{self.company_id}';
+    #         ''')
+
+    #         count = query.fetchone()[0]
+
+    #     finally:
+    #         # Close cursor and connection
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+
+    #     return count
+
+    # def get_buses_count(self):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         query = cursor.execute(f'''
+    #             SELECT COUNT(*)
+    #             FROM MTN_BusInformation
+    #             WHERE CompanyId = '{self.company_id}'
+    #         ''')
+    #         count = query.fetchone()[0]
+
+    #     finally:
+    #         # Close cursor and connection
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+
+    #     return count
+
+    # def get_Operational_hours(self):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         query = cursor.execute(f'''
+    #         SELECT 
+    #         SUM( CASE 
+    #             WHEN TRY_CAST(StartTime AS TIME) IS NOT NULL AND TRY_CAST(EndTime AS TIME) IS NOT NULL THEN
+    #                 CASE 
+    #                     WHEN TRY_CAST(EndTime AS TIME) < TRY_CAST(StartTime AS TIME) 
+    #                     THEN DATEDIFF(MINUTE, 
+    #                                 CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), 
+    #                                 DATEADD(DAY, 1, CAST(TRY_CAST(EndTime AS TIME) AS DATETIME)))
+    #                     ELSE DATEDIFF(MINUTE, 
+    #                                 CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), 
+    #                                 CAST(TRY_CAST(EndTime AS TIME) AS DATETIME))
+    #                 END
+    #             ELSE NULL
+    #         END) / 60.00 AS DurationInHours
+    #     FROM OPR_SchedulingDetailsTrip;''')
+
+    #         count = query.fetchone()[0]
+
+    #     finally:
+    #         # Close cursor and connection
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+
+    #     return round(count)
+
+    # def get_charger_count(self):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         query = cursor.execute(f'''
+    #                         SELECT 
+    #                             COUNT(*) as ChargerCount
+    #                         FROM MTN_ChargerMaster
+    #                         WHERE CompanyId = '{self.company_id}';
+    #                         ''')
+
+    #         count = query.fetchone()[0]
+
+    #     finally:
+    #         # Close cursor and connection
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+
+    #     return count
+
+    # def get_charging_hours(self):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         cursor.execute(f'''
+    #             SELECT SUM(CAST(SessionTime AS int)) / 60.00 as TotalChargingHours
+    #             FROM MTN_BusCharging ;
+    #         ''')
+    #         count = round(cursor.fetchone()[0])
+    #     finally:
+
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+    #     return count
+
+    # def get_trip_count(self, vehicle_number=None, start_date=None, end_date=None):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         query = f'''
+    #         SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId) AS TotalTrips
+    #         FROM MTN_BusInformation
+    #         INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+    #         INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+    #         INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+    #         WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
+    #     '''
+    #         if vehicle_number and start_date and end_date:
+    #             query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+
+    #         cursor.execute(query)
+    #         count = cursor.fetchone()[0]
+    #     finally:
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+
+    #     return count
+
+    # def get_distance_km(self, vehicle_number=None, start_date=None, end_date=None):
+    #     self.db_connection.connect()
+    #     connection = self.db_connection.get_connection()
+    #     # print(connection , "connection")
+    #     cursor = connection.cursor()
+    #     try:
+    #         query = f'''
+    #             SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM) AS TotalKms
+    #             FROM MTN_BusInformation
+    #             INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+    #             INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+    #             INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+    #             WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
+    #         '''
+    #         if vehicle_number and start_date and end_date:
+    #             query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+
+    #         count = cursor.execute(query)
+    #         distance_km = count.fetchone()[0] or 0
+    #     finally:
+    #         cursor.close()
+    #         # print("cursor close")
+    #         self.db_connection.close_connection()
+    #         # print("connection close")
+
+    #     return round(distance_km)
+    #     # self.cursor.execute(query)
+    #     # distance_km = self.cursor.fetchone()[0] or 0
+    #     # return round(distance_km)
+
+
+
+
+    def _execute_query(self, query, params=None):
+        # try:
         self.db_connection.connect()
         connection = self.db_connection.get_connection()
-        # print(connection , "connection")
         cursor = connection.cursor()
-        try:
-            query = cursor.execute(f'''
-                SELECT COUNT(*)
-                FROM MTN_BusInformation
-                WHERE CompanyId = '{self.company_id}'
-            ''')
-            count = query.fetchone()[0]
+        cursor.execute(query, params or ())
+        result = cursor.fetchone()
+        return result[0] if result else None
+    
+        # finally:
+        #     if cursor:
+        #         cursor.close()
+        #     self.db_connection.close_connection()
 
-        finally:
-            # Close cursor and connection
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
+    def get_route_count(self):
+        query = "SELECT COUNT(DISTINCT Code) FROM OPR_Route WHERE CompanyId = ?"
+        return self._execute_query(query, (self.company_id,))
 
-        return count
+    def get_buses_count(self):
+        query = "SELECT COUNT(*) FROM MTN_BusInformation WHERE CompanyId = ?"
+        return self._execute_query(query, (self.company_id,))
 
     def get_Operational_hours(self):
-        self.db_connection.connect()
-        connection = self.db_connection.get_connection()
-        # print(connection , "connection")
-        cursor = connection.cursor()
-        try:
-            query = cursor.execute(f'''
-            SELECT 
-            SUM( CASE 
-                WHEN TRY_CAST(StartTime AS TIME) IS NOT NULL AND TRY_CAST(EndTime AS TIME) IS NOT NULL THEN
+        query = """
+        SELECT SUM(
+            CASE 
+                WHEN TRY_CAST(StartTime AS TIME) IS NOT NULL AND TRY_CAST(EndTime AS TIME) IS NOT NULL 
+                THEN 
                     CASE 
                         WHEN TRY_CAST(EndTime AS TIME) < TRY_CAST(StartTime AS TIME) 
-                        THEN DATEDIFF(MINUTE, 
-                                    CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), 
-                                    DATEADD(DAY, 1, CAST(TRY_CAST(EndTime AS TIME) AS DATETIME)))
-                        ELSE DATEDIFF(MINUTE, 
-                                    CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), 
-                                    CAST(TRY_CAST(EndTime AS TIME) AS DATETIME))
+                        THEN DATEDIFF(MINUTE, CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), DATEADD(DAY, 1, CAST(TRY_CAST(EndTime AS TIME) AS DATETIME)))
+                        ELSE DATEDIFF(MINUTE, CAST(TRY_CAST(StartTime AS TIME) AS DATETIME), CAST(TRY_CAST(EndTime AS TIME) AS DATETIME))
                     END
                 ELSE NULL
-            END) / 60.00 AS DurationInHours
-        FROM OPR_SchedulingDetailsTrip;''')
-
-            count = query.fetchone()[0]
-
-        finally:
-            # Close cursor and connection
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
-
-        return round(count)
+            END
+        ) / 60.00 FROM OPR_SchedulingDetailsTrip
+        """
+        return round(self._execute_query(query))
 
     def get_charger_count(self):
-        self.db_connection.connect()
-        connection = self.db_connection.get_connection()
-        # print(connection , "connection")
-        cursor = connection.cursor()
-        try:
-            query = cursor.execute(f'''
-                            SELECT 
-                                COUNT(*) as ChargerCount
-                            FROM MTN_ChargerMaster
-                            WHERE CompanyId = '{self.company_id}';
-                            ''')
-
-            count = query.fetchone()[0]
-
-        finally:
-            # Close cursor and connection
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
-
-        return count
+        query = "SELECT COUNT(*) FROM MTN_ChargerMaster WHERE CompanyId = ?"
+        return self._execute_query(query, (self.company_id,))
 
     def get_charging_hours(self):
-        self.db_connection.connect()
-        connection = self.db_connection.get_connection()
-        # print(connection , "connection")
-        cursor = connection.cursor()
-        try:
-            cursor.execute(f'''
-                SELECT SUM(CAST(SessionTime AS int)) / 60.00 as TotalChargingHours
-                FROM MTN_BusCharging ;
-            ''')
-            count = round(cursor.fetchone()[0])
-        finally:
-
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
-        return count
+        query = "SELECT SUM(CAST(SessionTime AS int)) / 60.00 FROM MTN_BusCharging"
+        return round(self._execute_query(query))
 
     def get_trip_count(self, vehicle_number=None, start_date=None, end_date=None):
-        self.db_connection.connect()
-        connection = self.db_connection.get_connection()
-        # print(connection , "connection")
-        cursor = connection.cursor()
-        try:
-            query = f'''
-            SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId) AS TotalTrips
-            FROM MTN_BusInformation
-            INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
-            INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
-            INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-            WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
-        '''
-            if vehicle_number and start_date and end_date:
-                query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
-
-            cursor.execute(query)
-            count = cursor.fetchone()[0]
-        finally:
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
-
-        return count
+        query = """
+        SELECT COUNT(OPR_SchedulingDetailsTrip.SchedulingDetailsTripId)
+        FROM MTN_BusInformation
+        INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+        INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+        INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+        WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = ?
+        """
+        params = [self.company_id]
+        if vehicle_number and start_date and end_date:
+            query += " AND MTN_BusInformation.VehicleNumber = ? AND OPR_Scheduling.SchedulingDate BETWEEN ? AND ?"
+            params.extend([vehicle_number, start_date, end_date])
+        return self._execute_query(query, params)
 
     def get_distance_km(self, vehicle_number=None, start_date=None, end_date=None):
-        self.db_connection.connect()
-        connection = self.db_connection.get_connection()
-        # print(connection , "connection")
-        cursor = connection.cursor()
-        try:
-            query = f'''
-                SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM) AS TotalKms
-                FROM MTN_BusInformation
-                INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
-                INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
-                INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
-                WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = {self.company_id}
-            '''
-            if vehicle_number and start_date and end_date:
-                query += f" AND MTN_BusInformation.VehicleNumber = '{vehicle_number}' AND OPR_Scheduling.SchedulingDate BETWEEN '{start_date}' AND '{end_date}'"
+        query = """
+        SELECT SUM(OPR_SchedulingDetailsTrip.DistanceInKM)
+        FROM MTN_BusInformation
+        INNER JOIN OPR_SchedulingDetails ON MTN_BusInformation.BusInformationId = OPR_SchedulingDetails.BusInformationId
+        INNER JOIN OPR_SchedulingDetailsTrip ON OPR_SchedulingDetails.SchedulingDetailsId = OPR_SchedulingDetailsTrip.SchedulingDetailsId
+        INNER JOIN OPR_Scheduling ON OPR_SchedulingDetails.SchedulingId = OPR_Scheduling.SchedulingId
+        WHERE OPR_SchedulingDetailsTrip.IsLost = 0 AND MTN_BusInformation.CompanyId = ?
+        """
+        params = [self.company_id]
+        if vehicle_number and start_date and end_date:
+            query += " AND MTN_BusInformation.VehicleNumber = ? AND OPR_Scheduling.SchedulingDate BETWEEN ? AND ?"
+            params.extend([vehicle_number, start_date, end_date])
+        return round(self._execute_query(query, params) or 0)
+    
 
-            count = cursor.execute(query)
-            distance_km = count.fetchone()[0] or 0
-        finally:
-            cursor.close()
-            # print("cursor close")
-            self.db_connection.close_connection()
-            # print("connection close")
-
-        return round(distance_km)
-        # self.cursor.execute(query)
-        # distance_km = self.cursor.fetchone()[0] or 0
-        # return round(distance_km)
 
 
 class Vehicletracking:

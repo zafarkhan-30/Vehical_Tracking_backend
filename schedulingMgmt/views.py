@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .utils import ITMS, get_db_cursor
+from .utils import ITMS
 from .permissions import IsUber
 from .serializers import *
 from vehicle.permissions import IsMBMT
@@ -262,40 +262,25 @@ class GetdashboardCountView(GenericAPIView):
         vehicalNumber = data.get('vehicalNumber')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        try:
-            cursor = get_db_cursor()
-        except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_400_BAD_REQUEST
-            )
+    
+        # try:
+
         itms = ITMS(db_config, user_group)
-        # bus_deployed = itms.get_buses_count()
-        trip_count = itms.get_trip_count(vehicalNumber, start_date, end_date)
-        distance = itms.get_distance_km(vehicalNumber, start_date, end_date)
-        route_count = itms.get_route_count()
-        buses_count = itms.get_buses_count()
-        Charger_count = itms.get_charger_count()
-        charging_hours = itms.get_charging_hours()
-        OperationalHour = itms.get_Operational_hours()
-
-        return Response(
-            {
-                "status": "success",
-                "data": {
-
-                    # "bus_deployed" : bus_deployed,
-                    "route_count": route_count,
-                    "Bus_count": buses_count,
-                    "Chargers": Charger_count,
-
-                    "OperationalHour": OperationalHour,
-                    "TotalTrips": trip_count,
-                    "DistanceBytrip_in_Km": distance,
-                    "charging_hours": charging_hours
-
-                }
+        
+        return Response({
+            "status": "success",
+            "data": {
+                "route_count": itms.get_route_count(),
+                "Bus_count": itms.get_buses_count(),
+                "Chargers": itms.get_charger_count(),
+                "OperationalHour": itms.get_Operational_hours(),
+                "TotalTrips": itms.get_trip_count(vehicalNumber, start_date, end_date),
+                "DistanceBytrip_in_Km": itms.get_distance_km(vehicalNumber, start_date, end_date),
+                "charging_hours": itms.get_charging_hours()
             }
-        )
+        })
+        # except Exception as e:
+        #     return Response({
+        #         "status": "error",
+        #         "message": str(e)
+        #     }, status=status.HTTP_400_BAD_REQUEST)
