@@ -145,7 +145,7 @@ class GetChargersList(GenericAPIView):
         result = {"status": "error",
                   "message": "Unable to retrieve buses list"}
         try:
-            cursor = get_db_cursor()
+            # cursor = get_db_cursor()
             itms = ITMS(db_config, user_group)
             Charger_list = itms.get_charger_detail_list(
                 choice, date, charger_name, page, page_size)
@@ -182,16 +182,8 @@ class GetChargerDetail(GenericAPIView):
             date = serializer.validated_data.get('date')
             charger_id = serializer.validated_data.get('charger_id')
             user_group = str(request.user.groups.first())
-            try:
-                cursor = get_db_cursor()
-            except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-            itms = ITMS(cursor, user_group)
+           
+            itms = ITMS(db_config, user_group)
             Charger_list = itms.get_charger_Details(choice, date, charger_id)
             return Response(
                 {
@@ -223,16 +215,8 @@ class GetChargerDetailForPartik(GenericAPIView):
             date = serializer.validated_data.get('date')
             charger_id = serializer.validated_data.get('charger_id')
             user_group = str(request.user.groups.first())
-            try:
-                cursor = get_db_cursor()
-            except Exception as e:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": str(e)
-                    }, status=status.HTTP_400_BAD_REQUEST
-                )
-            itms = ITMS(cursor, user_group)
+          
+            itms = ITMS(db_config, user_group)
             Charger_list = itms.get_charger_Details(choice, date, charger_id)
             return Response(
                 {
