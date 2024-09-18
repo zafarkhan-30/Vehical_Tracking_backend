@@ -181,8 +181,6 @@ class ITMS:
                             mtn.BusCode,
                             mtn.VehicleNumber,
                             MAX(osd.SchedulingDate) AS LatestSchedulingDate,
-                            MIN(osd.StartODO) AS StartODO,
-                            MAX(osd.EndODO) AS EndODO,
                             COALESCE(MAX(osd.EndODO) - MIN(osd.StartODO), 0) AS TotalKmRunToday,
                             CASE WHEN COUNT(osd.SchedulingId) > 0 THEN 'Active'
                                 ELSE 'Not Scheduled'
@@ -261,6 +259,8 @@ class ITMS:
                         {pagination}
                         
                         ''').fetchall()
+            
+            
 
             # result = query.fetchall()
 
@@ -275,8 +275,11 @@ class ITMS:
                              'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                              'TotalEnergyConsumed_kwH': round(row.TotalEnergyConsumed),
                              'TotalKm': round(row.LastODO),
-                             'total_Today_RegenerationEnergy': MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
-                                                                                                  created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']} for row in query]
+                             'total_Today_RegenerationEnergy': 0
+                            #  MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
+                            #  created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
+                             } 
+                             for row in query]
         finally:
             # Close cursor and connection
             cursor.close()
