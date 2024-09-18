@@ -6,7 +6,6 @@ from .utils import *
 from .serializers import *
 from rest_framework.views import APIView
 from datetime import  date
-from django.contrib.auth import authenticate
 from knox.models import AuthToken
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -24,6 +23,9 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font 
 from django.http import HttpResponse
+
+
+
 
 class UserRegister(generics.GenericAPIView):
     serializer_class = RegisterSerializer

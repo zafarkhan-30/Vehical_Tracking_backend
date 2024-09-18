@@ -8,8 +8,6 @@ from vehicle.permissions import IsMBMT
 from rest_framework import status
 from database.models import *
 from rest_framework.parsers import MultiPartParser
-from VehicalTracking import settings
-from vehicle.utils import format_error_message, error_simplifier
 from .utils import db_config
 
 
@@ -62,25 +60,21 @@ class GetScheduleBusesList(GenericAPIView):
     def get(self, request, scheduling_date, route_id, *args, **kwargs):
         user_group = str(request.user.groups.first())
         try:
-            cursor = get_db_cursor()
-        except Exception as e:
-            return Response(
-                {
-                    "status": "error",
-                    "message": str(e)
-                }, status=status.HTTP_400_BAD_REQUEST
-            )
-        itms = ITMS(cursor, user_group)
-        Buses_list = itms.Get_Schedule_Buses_List(scheduling_date, route_id)
 
-        return Response(
-            {
-                "status": "success",
-                "data": {
-                    'buses_list': Buses_list
+            itms = ITMS(db_config, user_group)
+            Buses_list = itms.Get_Schedule_Buses_List(scheduling_date, route_id)
+            result = {
+                    "status": "success",
+                    "data": {
+                        'buses_list': Buses_list
+                    }
                 }
-            }, status=status.HTTP_200_OK
-        )
+           
+        except Exception as e:
+            result['message'] = str(e)
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(result, status=status.HTTP_200_OK)
 
 
 class GetBussesList(GenericAPIView):
@@ -247,24 +241,24 @@ class GetdashboardCountView(GenericAPIView):
         start_date = data.get('start_date')
         end_date = data.get('end_date')
     
-        # try:
+        try:
 
-        itms = ITMS(db_config, user_group)
-        
-        return Response({
-            "status": "success",
-            "data": {
-                "route_count": itms.get_route_count(),
-                "Bus_count": itms.get_buses_count(),
-                "Chargers": itms.get_charger_count(),
-                "OperationalHour": itms.get_Operational_hours(),
-                "TotalTrips": itms.get_trip_count(vehicalNumber, start_date, end_date),
-                "DistanceBytrip_in_Km": itms.get_distance_km(vehicalNumber, start_date, end_date),
-                "charging_hours": itms.get_charging_hours()
-            }
-        })
-        # except Exception as e:
-        #     return Response({
-        #         "status": "error",
-        #         "message": str(e)
-        #     }, status=status.HTTP_400_BAD_REQUEST)
+            itms = ITMS(db_config, user_group)
+            
+            return Response({
+                "status": "success",
+                "data": {
+                    "route_count": itms.get_route_count(),
+                    "Bus_count": itms.get_buses_count(),
+                    "Chargers": itms.get_charger_count(),
+                    "OperationalHour": itms.get_Operational_hours(),
+                    "TotalTrips": itms.get_trip_count(vehicalNumber, start_date, end_date),
+                    "DistanceBytrip_in_Km": itms.get_distance_km(vehicalNumber, start_date, end_date),
+                    "charging_hours": itms.get_charging_hours()
+                }
+            })
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
