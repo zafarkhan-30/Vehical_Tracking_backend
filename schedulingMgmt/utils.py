@@ -7,6 +7,7 @@ import random
 from rest_framework.response import Response
 import pyodbc
 from django.db.models import Sum
+from django.db.models.functions import Coalesce
 import math
 from VehicalTracking.settings import ITMS_SERVER, ITMS_DRIVER, ITMS_PASSWORD, ITMS_USERNAME, ITMS_DATABASE_NAME
 # from .db_connection import DatabaseConnection
@@ -264,6 +265,16 @@ class ITMS:
 
             # result = query.fetchall()
 
+            vehicle_numbers = [row.VehicleNumber for row in query]
+            regeneration_data = (
+                MasterDeviceDetails.objects
+                .filter(device__registrationNumber__in=vehicle_numbers, created_at__date=date)
+                .values('device__registrationNumber')
+                .annotate(total_energy=Coalesce(Sum('totalRegenerationEnergy'), 0))
+            )
+            print(regeneration_data , "regeneration data")
+            
+            regeneration_dict = {item['device__registrationNumber']: item['total_energy'] for item in regeneration_data}
             query_result = [{'VehicleNumber': row.VehicleNumber,
                              'BusInformationId': row.BusInformationId,
                              'BusCode': row.BusCode,
@@ -275,9 +286,7 @@ class ITMS:
                              'totalEnergyDay_KwH': round(row.TodayEnergyConsumption),
                              'TotalEnergyConsumed_kwH': round(row.TotalEnergyConsumed),
                              'TotalKm': round(row.LastODO),
-                             'total_Today_RegenerationEnergy': 0
-                            #  MasterDeviceDetails.objects.filter(device__registrationNumber=row.VehicleNumber,
-                            #  created_at__date=date).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
+                             'total_Today_RegenerationEnergy': regeneration_dict.get(row.VehicleNumber, 0)
                              } 
                              for row in query]
         finally:

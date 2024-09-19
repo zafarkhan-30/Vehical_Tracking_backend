@@ -64,7 +64,7 @@ def fetch_old_data_and_backup():
 
     masterdevicedetails_table_query = """
     COPY (SELECT * FROM public.database_masterdevicedetails
-        WHERE created_at < NOW() - INTERVAL '2 days'
+        WHERE created_at < NOW() - INTERVAL '30 days'
     )
     TO STDOUT WITH CSV HEADER
     """
@@ -269,7 +269,7 @@ def delete_old_data():
     
     delete_query = """
     DELETE FROM public.database_masterdevicedetails
-    WHERE created_at < NOW() - INTERVAL '2 days'
+    WHERE created_at < NOW() - INTERVAL '30 days'
     """
     
     cursor.execute(delete_query)

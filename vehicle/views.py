@@ -23,7 +23,8 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font 
 from django.http import HttpResponse
-
+from django.db.models import Prefetch
+from django.utils import timezone
 
 
 
@@ -336,32 +337,68 @@ class GetDeviceParametersDetails(generics.ListAPIView):
         return super(GetDeviceParametersDetails, self).dispatch(*args, **kwargs)
 
 
-def get_devices_details_view(query_params=None , user_group = None):
-    try:
-        data_list = []
-        if query_params:
-            names = query_params.get('name')
+# def get_devices_details_view(query_params=None , user_group = None):
+#     try:
+#         data_list = []
+#         if query_params:
+#             names = query_params.get('name')
                  
-            for name in names:
-                devices_list = devices.objects.filter(name__iexact=name)
-                for device in devices_list:
-                    device_details_serailizer = deviceDetailsSerialiser(device).data
-                    today = date.today()
-                    try:
-                        master_data_list = MasterDeviceDetails.objects.filter(device_id = device , 
-                                                                              created_at__date=today).latest("created_at")
-                        data_list_serializer = DataListSerializer(master_data_list).data
-                    except:
-                        continue
-                    data_list.append({
-                        'device_details' : device_details_serailizer,
-                        'data' : data_list_serializer
-                    })
+#             for name in names:
+#                 devices_list = devices.objects.filter(name__iexact=name)
+#                 for device in devices_list:
+#                     device_details_serailizer = deviceDetailsSerialiser(device).data
+#                     today = date.today()
+#                     try:
+#                         master_data_list = MasterDeviceDetails.objects.filter(device_id = device , 
+#                                                                               created_at__date=today).latest("created_at")
+#                         data_list_serializer = DataListSerializer(master_data_list).data
+#                     except:
+#                         continue
+#                     data_list.append({
+#                         'device_details' : device_details_serailizer,
+#                         'data' : data_list_serializer
+#                     })
+#         return data_list
+#     except Exception as e:
+#         return Response({'status': 'error' ,
+#                           'message': str(e)} , status= 200)
+
+
+def get_devices_details_view(query_params=None, user_group=None):
+    try:
+        if not query_params or 'name' not in query_params:
+            return []
+
+        names = query_params.get('name', [])
+        today = timezone.now().date()
+
+        devices_queryset = (
+            devices.objects.filter(name__in=names)
+            .prefetch_related(
+                Prefetch(
+                    'master_device_id',
+                    queryset=MasterDeviceDetails.objects.filter(created_at__date=today),
+                    to_attr='today_details'
+                )
+            )
+        )
+        data_list = []
+        for device in devices_queryset:
+            device_details = deviceDetailsSerialiser(device).data
+            
+            if device.today_details:
+                latest_details = max(device.today_details, key=lambda x: x.created_at)
+                data_list_serializer = DataListSerializer(latest_details).data
+                
+                data_list.append({
+                    'device_details': device_details,
+                    'data': data_list_serializer
+                })
+
         return data_list
+
     except Exception as e:
-        return Response({'status': 'error' ,
-                          'message': str(e)} , status= 200)
-    
+        return Response({'status': 'error', 'message': str(e)}, status=500)
 
 class GettimeRangedateData(generics.GenericAPIView):
     def get( self, request , device_name , start_date ,end_date ):
@@ -382,9 +419,6 @@ class GettimeRangedateData(generics.GenericAPIView):
             return Response (data_list)
         except:
             return Response({'status': 'error' , 'message': 'No data available'} , status= 200)
-
-
-
 
 
 # Routes and Stop APIs

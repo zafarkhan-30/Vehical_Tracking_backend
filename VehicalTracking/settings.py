@@ -249,8 +249,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CRONJOBS = [
     ('* * * * *', 'vehicle.cron_job.run_device_details_view'),
-    # ('*/30 * * * *', 'vehicle.cron_job.Perform_backup'),
-    ('* * * * *', 'vehicle.cron_job.Perform_backup'),
+    
+    ('0 0 * * *', 'vehicle.cron_job.Perform_backup'),
   
 ]
 
