@@ -51,6 +51,11 @@ class ITMS:
                  {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
         
              """
+        count_filter = f"""
+                r.CompanyId = '{self.company_id}' 
+                 {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
+        
+             """
         self.db_connection.connect()
         connection = self.db_connection.get_connection()
         cursor = connection.cursor()
@@ -69,36 +74,52 @@ class ITMS:
                 JOIN 
                     OPR_Route r ON o.RouteId = r.RouteId
                 WHERE 
-                    os.SchedulingDate = '{date}' {filter}
+                    {count_filter} 
             ''').fetchone()[0]
 
             # Main query
             query = cursor.execute(f'''
+                WITH RouteData AS (
+                    SELECT 
+                        r.RouteId,
+                        r.Name,
+                        r.Code,
+                        os.SchedulingDate AS Date, 
+                        COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
+                        COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
+                        COALESCE(SUM(o.TotalTrip), 0) AS TotalTrip,
+                        ROW_NUMBER() OVER (PARTITION BY r.RouteId ORDER BY CASE WHEN os.SchedulingDate IS NOT NULL THEN 0 ELSE 1 END) AS RowNum
+                    FROM 
+                        OPR_Route r
+                    LEFT JOIN 
+                        OPR_Schedule o ON r.RouteId = o.RouteId
+                    LEFT JOIN 
+                        OPR_SchedulingDetails osd ON o.ScheduleId = osd.ScheduleId
+                    LEFT JOIN 
+                        OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId AND os.SchedulingDate = '{date}'
+                    WHERE 
+                        os.SchedulingDate = '{date}' OR os.SchedulingDate IS NULL
+                        {filter}
+                    GROUP BY 
+                        r.RouteId,
+                        r.Name,
+                        r.Code,
+                        os.SchedulingDate 
+                )
                 SELECT 
-                    r.RouteId AS RouteId,
-                    r.Name AS Name,
-                    r.Code AS Code,
-                    os.SchedulingDate AS Date, 
-                    COUNT(DISTINCT osd.BusInformationId) AS NumberOfBuses,
-                    COUNT(DISTINCT o.Code) AS NumberOfScheduleCodes,
-                    SUM(o.TotalTrip) AS TotalTrip
+                    RouteId,
+                    Name,
+                    Code,
+                    Date,
+                    CASE WHEN Date IS NOT NULL THEN NumberOfBuses ELSE NULL END AS NumberOfBuses,
+                    CASE WHEN Date IS NOT NULL THEN NumberOfScheduleCodes ELSE NULL END AS NumberOfScheduleCodes,
+                    TotalTrip
                 FROM 
-                    OPR_Scheduling os
-                JOIN 
-                    OPR_SchedulingDetails osd ON os.SchedulingId = osd.SchedulingId
-                JOIN 
-                    OPR_Schedule o ON osd.ScheduleId = o.ScheduleId
-                JOIN 
-                    OPR_Route r ON o.RouteId = r.RouteId
+                    RouteData
                 WHERE 
-                    os.SchedulingDate = '{date}' {filter}
-                GROUP BY 
-                    r.RouteId,
-                    r.Name,
-                    r.Code,
-                    os.SchedulingDate 
+                    RowNum = 1
                 ORDER BY 
-                    r.RouteId
+                    RouteId
                 {pagination}
             ''').fetchall()
 
