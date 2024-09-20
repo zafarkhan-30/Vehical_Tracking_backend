@@ -111,8 +111,8 @@ class ITMS:
                     Name,
                     Code,
                     Date,
-                    CASE WHEN Date IS NOT NULL THEN NumberOfBuses ELSE NULL END AS NumberOfBuses,
-                    CASE WHEN Date IS NOT NULL THEN NumberOfScheduleCodes ELSE NULL END AS NumberOfScheduleCodes,
+                    CASE WHEN Date IS NOT NULL THEN NumberOfBuses ELSE 0 END AS NumberOfBuses,
+                    CASE WHEN Date IS NOT NULL THEN NumberOfScheduleCodes ELSE 0 END AS NumberOfScheduleCodes,
                     CASE WHEN Date IS NOT NULL THEN TotalTrip ELSE 0 END AS TotalTrip
                 FROM 
                     RouteData
