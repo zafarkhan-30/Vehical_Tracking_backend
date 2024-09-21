@@ -118,8 +118,8 @@ class PostMasterDeviceData(APIView):
 
                 master_data_list = []
                 for data in devices_data:
-                    if "deviceDetails" in data:
-                            create_device_object(data)
+                    # if "deviceDetails" in data:
+                    #         create_device_object(data)
                     device_id = data.get("id")
                     device_instances = devices.objects.filter(device_id=device_id).first()
                     

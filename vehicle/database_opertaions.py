@@ -15,7 +15,6 @@ def create_device_object(device_detail):
                 trackingCode=device_details.get("trackingCode")
             )
 
-
 def parse_timestamp(timestamp: Any):
     try:
         return datetime.datetime.fromtimestamp(timestamp) if timestamp else None
