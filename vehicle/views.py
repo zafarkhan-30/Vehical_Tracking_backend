@@ -118,13 +118,18 @@ class PostMasterDeviceData(APIView):
 
                 master_data_list = []
                 for data in devices_data:
+                    if "deviceDetails" in data:
+                            create_device_object(data)
                     device_id = data.get("id")
                     device_instances = devices.objects.filter(device_id=device_id).first()
                     
                     if device_instances:
                         master_data_list.append(create_master_device_details(device_instances , data))
+                    # else:
+                    #     if "deviceDetails" in data:
+                    #         create_device_object(data)
 
-                print(master_data_list)    
+                # print(master_data_list)    
                 master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
 
                 return Response({"message": "device data created successfully"}, status=200)

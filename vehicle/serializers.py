@@ -50,7 +50,6 @@ class LoginSerializer(serializers.Serializer):
 		# model = CustomUser
         fields = ('username','password')
 
-
 class LoginSerializer(serializers.Serializer):
 	username = serializers.CharField()
 	password = serializers.CharField()
@@ -140,15 +139,11 @@ class GetRoute15Serializer(GeoFeatureModelSerializer):
         fields = ("name" ,)
         geo_field = "geom"
 
-
-
 class GetChargingStationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Chargingsation
         fields = ('name',)
         geo_field = "geom"
-
-
 
 class Get_totalRegenerationEnergySerializer(serializers.Serializer):
      date = serializers.DateField(required=True)
