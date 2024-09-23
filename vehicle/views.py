@@ -110,33 +110,48 @@ class PostMasterDeviceData(APIView):
     def get(self , request):
         refresh_token = refresh_access_token()
         response = get_device_Data(refresh_token)
-    
+
         if response.status_code == 200:
             try:
-                devices_data = json.loads(response.content).get('data')
-                # print(devices_data)
-
+                devices_data = json.loads(response.content).get('data', [])
+                
                 master_data_list = []
+                device_updates = []
+
                 for data in devices_data:
-                    # if "deviceDetails" in data:
-                    #         create_device_object(data)
                     device_id = data.get("id")
-                    device_instances = devices.objects.filter(device_id=device_id).first()
+                    gps_info = data.get("location")
+                    can_info = data.get("canInfo")
                     
-                    if device_instances:
-                        master_data_list.append(create_master_device_details(device_instances , data))
-                    # else:
-                    #     if "deviceDetails" in data:
-                    #         create_device_object(data)
+                    # Determine if the device is active based on GPS and CAN info
+                    new_status = bool(gps_info and can_info)
 
-                # print(master_data_list)    
-                master_object = MasterDeviceDetails.objects.bulk_create(master_data_list)
+                    # Directly update only the 'active' field for the device
+                    device_updates.append({
+                        'device_id': device_id,
+                        'status': new_status
+                    })
+                    
+                    # If GPS or CAN data is present, prepare for bulk insertion
+                    if gps_info or can_info:
+                        master_data_list.append(create_master_device_details(device_id,data))
 
-                return Response({"message": "device data created successfully"}, status=200)
+                # Perform bulk update for 'active' status
+                if device_updates:
+                    update_device_status_bulk(device_updates)
+
+                # Bulk create master device details
+                if master_data_list:
+                    MasterDeviceDetails.objects.bulk_create(master_data_list)
+
+                return Response({"message": "Device data processed successfully"}, status=200)
+            
             except Exception as e:
-                return Response({"message": str(e)})
+                return Response({"message": str(e)}, status=500)
         else:
             return Response(response.content, status=response.status_code)
+
+
  
    
 class ViewDeviceAllDetails(APIView):
@@ -280,7 +295,7 @@ class ViewAmnexDeviceDetails(APIView):
     throttle_classes = [UserRateThrottle , AnonRateThrottle]
     def get_queryset(self):
 
-        queryset = devices.objects.filter(name__icontains='MBMT')
+        queryset = devices.objects.filter(name__icontains='MBMT' , status = True)
             
         return queryset
     """
@@ -309,14 +324,10 @@ class ViewAmnexDeviceDetails(APIView):
                 try:
                     master_data_list = MasterDeviceDetails.objects.filter(device_id = device ,
                                                                           created_at__date=today ).latest("created_at")
-                    # select SUM(dm."totalRegenerationEnergy") from public.database_masterdevicedetails dm 
-                    # where  dm.device_id = 36 and DATE(dm.created_at) = '2024-08-17';
+                  
 
                     
                     data_list_serializer = DataListSerializer(master_data_list).data
-
-                    # total_Today_RegenerationEnergy = MasterDeviceDetails.objects.filter(device_id=device,
-                    #         created_at__date=today).aggregate(total_energy=Sum('totalRegenerationEnergy'))['total_energy']
 
                 except:
                     continue
@@ -378,7 +389,7 @@ def get_devices_details_view(query_params=None, user_group=None):
         today = timezone.now().date()
 
         devices_queryset = (
-            devices.objects.filter(name__in=names)
+            devices.objects.filter(name__in=names , status = True)
             .prefetch_related(
                 Prefetch(
                     'master_device_id',

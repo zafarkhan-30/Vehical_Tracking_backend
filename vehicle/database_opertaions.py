@@ -15,6 +15,12 @@ def create_device_object(device_detail):
                 trackingCode=device_details.get("trackingCode")
             )
 
+
+def update_device_status_bulk(device_updates):
+    # Perform a bulk update for the 'active' status based on device_id
+    for update in device_updates:
+        devices.objects.filter(device_id=update['device_id']).update(status=update['status'])
+
 def parse_timestamp(timestamp: Any):
     try:
         return datetime.datetime.fromtimestamp(timestamp) if timestamp else None
@@ -27,7 +33,8 @@ def parse_float(value: Any):
     except (ValueError, TypeError):
         return 0.0
 
-def create_master_device_details(device_instances: int, data: Dict[str, Any]):
+def create_master_device_details(device_id: int, data: Dict[str, Any]):
+    device_instance = devices.objects.filter(device_id=device_id).first()
     active = data.get("active")
     status = data.get("status")
 
@@ -50,7 +57,7 @@ def create_master_device_details(device_instances: int, data: Dict[str, Any]):
     dinputs_details = data.get("dinputs", {})
 
     return MasterDeviceDetails(
-        device=device_instances,
+        device=device_instance,
         active=active,
         status=status,
         gpsTime=gps_time,

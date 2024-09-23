@@ -16,6 +16,7 @@ class devices(models.Model):
     deviceType = models.CharField(max_length = 255, blank=True , null = True    )
     chassisNumber = models.CharField(max_length = 255, blank=True , null    = True )
     trackingCode = models.CharField(max_length = 255, blank=True , null = True ) 
+    status = models.BooleanField(default=True) 
     created_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
