@@ -142,7 +142,7 @@ class GetRoute15Serializer(GeoFeatureModelSerializer):
 class GetChargingStationSerializer(GeoFeatureModelSerializer):
     class Meta:
         model = Chargingsation
-        fields = ('name',)
+        fields = ('gid','name')
         geo_field = "geom"
 
 class Get_totalRegenerationEnergySerializer(serializers.Serializer):
