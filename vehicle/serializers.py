@@ -139,11 +139,12 @@ class GetRoute15Serializer(GeoFeatureModelSerializer):
         fields = ("name" ,)
         geo_field = "geom"
 
-class GetChargingStationSerializer(GeoFeatureModelSerializer):
+
+class GetChargingStationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chargingsation
-        fields = ('gid','name')
-        geo_field = "geom"
+        fields = ('gid','name' , 'geom')
+        
 
 class Get_totalRegenerationEnergySerializer(serializers.Serializer):
      date = serializers.DateField(required=True)
