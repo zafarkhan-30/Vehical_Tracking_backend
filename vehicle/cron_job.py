@@ -42,8 +42,10 @@ TARGET_DB_CONFIG = {
 }
 
 
-DEVICE_DETAIL_TMP_FILE = os.path.join(settings.MEDIA_ROOT, 'backup', 'DEVICE_DETAIL_data.csv')
-MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join(settings.MEDIA_ROOT, 'backup', 'MASTER_DEVICE_DETAIL_data.csv')
+# DEVICE_DETAIL_TMP_FILE = os.path.join(settings.MEDIA_ROOT, 'backup', 'DEVICE_DETAIL_data.csv')
+# MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join(settings.MEDIA_ROOT, 'backup', 'MASTER_DEVICE_DETAIL_data.csv')
+DEVICE_DETAIL_TMP_FILE = os.path.join('/home/ubuntu/Vehical_Tracking_backend/media/', 'backup/', 'DEVICE_DETAIL_data.csv')
+MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join('/home/ubuntu/Vehical_Tracking_backend/media/', 'backup/', 'MASTER_DEVICE_DETAIL_data.csv')
 
 
 # Ensure the directory exists
@@ -317,7 +319,7 @@ def delete_old_data():
 def Perform_backup():
     try:
         # 1 > fetched old data and crate a Backup excel file and one staging table in database
-        # fetch_old_data_and_backup()
+        fetch_old_data_and_backup()
 
         create_device_table()
         insert_backup_data()
