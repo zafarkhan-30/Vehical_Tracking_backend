@@ -29,12 +29,12 @@ TARGET_DB_CONFIG = {
 # DEVICE_DETAIL_TMP_FILE = os.path.join(env.MEDIA_ROOT, 'backup', 'DEVICE_DETAIL_data.csv')
 # MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join(env.MEDIA_ROOT, 'backup', 'MASTER_DEVICE_DETAIL_data.csv')
 
-DEVICE_DETAIL_TMP_FILE = os.path.join('C:/Jafar/Vehical-Tracking/media/', 'backup', 'DEVICE_DETAIL_data.csv')
+# DEVICE_DETAIL_TMP_FILE = os.path.join('C:/Jafar/Vehical-Tracking/media/', 'backup', 'DEVICE_DETAIL_data.csv')
 MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join('C:/Jafar/Vehical-Tracking/media/', 'backup/', 'MASTER_DEVICE_DETAIL_data.csv')
 
 
 # Ensure the directory exists
-os.makedirs(os.path.dirname(DEVICE_DETAIL_TMP_FILE), exist_ok=True)
+# os.makedirs(os.path.dirname(DEVICE_DETAIL_TMP_FILE), exist_ok=True)
 os.makedirs(os.path.dirname(MASTER_DEVICE_DETAIL_TMP_FILE), exist_ok=True)
 
 def fetch_old_data_and_backup():
@@ -65,33 +65,33 @@ def fetch_old_data_and_backup():
     cursor.close()
     conn.close()
 
-def create_device_table():
-    conn = psycopg2.connect(**TARGET_DB_CONFIG)
-    cursor = conn.cursor()
+# def create_device_table():
+#     conn = psycopg2.connect(**TARGET_DB_CONFIG)
+#     cursor = conn.cursor()
 
-    create_device_table_query = """
-    CREATE TABLE IF NOT EXISTS public.backup_devices (
-        id SERIAL PRIMARY KEY,
-        device_id INTEGER,
-        name TEXT,
-        registrationNumber TEXT,
-        deviceType TEXT,
-        chassisNumber TEXT,
-        trackingCode INTEGER,
-        created_at TIMESTAMP
-    )
-    """
+#     create_device_table_query = """
+#     CREATE TABLE IF NOT EXISTS public.backup_devices (
+#         id SERIAL PRIMARY KEY,
+#         device_id INTEGER,
+#         name TEXT,
+#         registrationNumber TEXT,
+#         deviceType TEXT,
+#         chassisNumber TEXT,
+#         trackingCode INTEGER,
+#         created_at TIMESTAMP
+#     )
+#     """
     
-    cursor.execute(create_device_table_query)
-    conn.commit()
+#     cursor.execute(create_device_table_query)
+#     conn.commit()
 
-    with open(DEVICE_DETAIL_TMP_FILE, 'r') as f:
-        cursor.copy_expert("COPY public.backup_devices FROM STDIN WITH CSV HEADER", f)
+#     with open(DEVICE_DETAIL_TMP_FILE, 'r') as f:
+#         cursor.copy_expert("COPY public.backup_devices FROM STDIN WITH CSV HEADER", f)
 
-    conn.commit()
+#     conn.commit()
     
-    cursor.close()
-    conn.close()
+#     cursor.close()
+#     conn.close()
 
 def insert_backup_data():
     conn = psycopg2.connect(**TARGET_DB_CONFIG)
@@ -275,11 +275,11 @@ def Perform_backup():
         fetch_old_data_and_backup()
 
         # create_device_table()
-        # insert_backup_data()
+        insert_backup_data()
         # delete_old_data()
 
         # Remove the temporary file
-        os.remove(DEVICE_DETAIL_TMP_FILE)
+        # os.remove(DEVICE_DETAIL_TMP_FILE)
         os.remove(MASTER_DEVICE_DETAIL_TMP_FILE)
     except Exception as e:
         # with open(log_file, "a") as f:

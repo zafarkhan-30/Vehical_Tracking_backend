@@ -47,7 +47,7 @@ MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join(settings.MEDIA_ROOT, 'backup', 'MAS
 
 
 # Ensure the directory exists
-os.makedirs(os.path.dirname(DEVICE_DETAIL_TMP_FILE), exist_ok=True)
+# os.makedirs(os.path.dirname(DEVICE_DETAIL_TMP_FILE), exist_ok=True)
 os.makedirs(os.path.dirname(MASTER_DEVICE_DETAIL_TMP_FILE), exist_ok=True)
 
 def fetch_old_data_and_backup():
@@ -291,7 +291,7 @@ def Perform_backup():
         insert_backup_data()
         delete_old_data()
         # Remove the temporary file
-        # os.remove(DEVICE_DETAIL_TMP_FILE)
+        os.remove(DEVICE_DETAIL_TMP_FILE)
         os.remove(MASTER_DEVICE_DETAIL_TMP_FILE)
     except Exception as e:
         # with open(log_file, "a") as f:
