@@ -47,30 +47,30 @@ MASTER_DEVICE_DETAIL_TMP_FILE = os.path.join(settings.MEDIA_ROOT, 'backup', 'MAS
 
 
 # Ensure the directory exists
-# os.makedirs(os.path.dirname(DEVICE_DETAIL_TMP_FILE), exist_ok=True)
+os.makedirs(os.path.dirname(DEVICE_DETAIL_TMP_FILE), exist_ok=True)
 os.makedirs(os.path.dirname(MASTER_DEVICE_DETAIL_TMP_FILE), exist_ok=True)
 
 def fetch_old_data_and_backup():
     conn = psycopg2.connect(**SOURCE_DB_CONFIG)
     cursor = conn.cursor()
     
-    # device_table_query = """
-    # COPY (SELECT * FROM public.database_devices)
-    # TO STDOUT WITH CSV HEADER
-    # """
+    device_table_query = """
+    COPY (SELECT * FROM public.database_devices)
+    TO STDOUT WITH CSV HEADER
+    """
 
     # >= '2024-06-12 00:00:00' AND created_at < '2024-06-13 00:00:00';
     # < NOW() - INTERVAL '21 days'
 
     masterdevicedetails_table_query = """
     COPY (SELECT * FROM public.database_masterdevicedetails
-        WHERE created_at < NOW() - INTERVAL '30 days'
+        WHERE created_at < NOW() - INTERVAL '2 days'
     )
     TO STDOUT WITH CSV HEADER
     """
 
-    # with open(DEVICE_DETAIL_TMP_FILE, 'w', newline='') as f:
-    #     cursor.copy_expert(device_table_query, f)
+    with open(DEVICE_DETAIL_TMP_FILE, 'w', newline='') as f:
+        cursor.copy_expert(device_table_query, f)
     
     with open(MASTER_DEVICE_DETAIL_TMP_FILE, 'w', newline='') as f:
         cursor.copy_expert(masterdevicedetails_table_query, f)
@@ -78,33 +78,67 @@ def fetch_old_data_and_backup():
     cursor.close()
     conn.close()
 
+
 def create_device_table():
     conn = psycopg2.connect(**TARGET_DB_CONFIG)
     cursor = conn.cursor()
 
+    # Create the main table
     create_device_table_query = """
     CREATE TABLE IF NOT EXISTS public.backup_devices (
         id SERIAL PRIMARY KEY,
-        device_id INTEGER,
+        device_id INTEGER UNIQUE,
         name TEXT,
         registrationNumber TEXT,
         deviceType TEXT,
         chassisNumber TEXT,
         trackingCode INTEGER,
-        created_at TIMESTAMP
+        created_at TIMESTAMP,
+        status BOOLEAN
     )
     """
     
     cursor.execute(create_device_table_query)
     conn.commit()
 
+    # Create a temporary table to load CSV data
+    create_temp_table_query = """
+    CREATE TEMP TABLE temp_backup_devices (
+        id SERIAL PRIMARY KEY,
+        device_id INTEGER UNIQUE,
+        name TEXT,
+        registrationNumber TEXT,
+        deviceType TEXT,
+        chassisNumber TEXT,
+        trackingCode INTEGER,
+        created_at TIMESTAMP,
+        status BOOLEAN
+    )
+    """
+    cursor.execute(create_temp_table_query)
+    conn.commit()
+
+    # Load data into temporary table
     with open(DEVICE_DETAIL_TMP_FILE, 'r') as f:
-        cursor.copy_expert("COPY public.backup_devices FROM STDIN WITH CSV HEADER", f)
+        cursor.copy_expert("""
+        COPY temp_backup_devices FROM STDIN WITH CSV HEADER
+        """, f)
 
     conn.commit()
-    
+
+    # Perform the UPSERT operation into the main table
+    upsert_query = """
+    INSERT INTO public.backup_devices (id, device_id, name, registrationNumber, deviceType, chassisNumber, trackingCode, created_at, status)
+    SELECT id, device_id, name, registrationNumber, deviceType, chassisNumber, trackingCode, created_at, status
+    FROM temp_backup_devices
+    ON CONFLICT (id) DO NOTHING
+    """
+    cursor.execute(upsert_query)
+    conn.commit()
+
     cursor.close()
     conn.close()
+
 
 def insert_backup_data():
     conn = psycopg2.connect(**TARGET_DB_CONFIG)
@@ -269,7 +303,7 @@ def delete_old_data():
     
     delete_query = """
     DELETE FROM public.database_masterdevicedetails
-    WHERE created_at < NOW() - INTERVAL '30 days'
+    WHERE created_at < NOW() - INTERVAL '2 days'
     """
     
     cursor.execute(delete_query)
@@ -279,17 +313,16 @@ def delete_old_data():
     conn.close()
 
 
-
-
 # backup_log_file = "/tmp/cron_job_output.log"
 def Perform_backup():
     try:
         # 1 > fetched old data and crate a Backup excel file and one staging table in database
-        fetch_old_data_and_backup()
+        # fetch_old_data_and_backup()
 
-        # create_device_table()
+        create_device_table()
         insert_backup_data()
         delete_old_data()
+
         # Remove the temporary file
         os.remove(DEVICE_DETAIL_TMP_FILE)
         os.remove(MASTER_DEVICE_DETAIL_TMP_FILE)
@@ -298,7 +331,3 @@ def Perform_backup():
         #     f.write(f"An error occurred: {str(e)}\n")
 
         print(f"An error occurred: {str(e)}")
-
-
-
-
