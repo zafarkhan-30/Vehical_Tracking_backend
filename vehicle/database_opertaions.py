@@ -19,7 +19,7 @@ def create_device_object(device_detail):
 def update_device_status_bulk(device_updates):
     # Perform a bulk update for the 'active' status based on device_id
     for update in device_updates:
-        devices.objects.filter(device_id=update['device_id']).update(status=update['status'])
+        devices.objects.filter(trackingCode=update['device_id']).update(status=update['status'])
 
 def parse_timestamp(timestamp: Any):
     try:

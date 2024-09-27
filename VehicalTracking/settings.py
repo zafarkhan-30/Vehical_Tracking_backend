@@ -175,15 +175,7 @@ REST_FRAMEWORK = {
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
      'knox.auth.TokenAuthentication', 
-    ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.UserRateThrottle',
-        'rest_framework.throttling.AnonRateThrottle',
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'user': '1500/day',  # Adjust the rate limits as needed
-        'anon': '1500/day',
-    }
+    ]
 
 
 }
