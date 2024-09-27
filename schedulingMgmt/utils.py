@@ -41,11 +41,11 @@ class ITMS:
             return 2
         return None
 
-    def get_route_list(self, date=None, route_number='', page=None, page_size=None):
+    def get_route_list(self, date=None, route_number=None, page=None, page_size=None):
         date = date or datetime.date.today()
         pagination = f"""OFFSET {(int(page) - 1) * int(page_size)} ROWS FETCH NEXT {page_size} ROWS ONLY""" \
             if page and page_size else ""
-
+        print(route_number)
         filter = f"""
                  AND r.CompanyId = '{self.company_id}' 
                  {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
@@ -53,7 +53,7 @@ class ITMS:
              """
         count_filter = f"""
                 r.CompanyId = '{self.company_id}' 
-                 {f"AND r.Code LIKE '%{route_number}%' " if route_number else ''}
+                 {f"AND r.Code LIKE '%{route_number}%'" if route_number else ''}
         
              """
         self.db_connection.connect()

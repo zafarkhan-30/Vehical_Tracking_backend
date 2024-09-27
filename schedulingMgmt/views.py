@@ -47,7 +47,7 @@ class GetRouteList(GenericAPIView):
 
         except Exception as e:
             result['message'] = str(e)
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            return Response(result, status=status.HTTP_401_UNAUTHORIZED)
 
         return Response(result, status=status.HTTP_200_OK)
 
