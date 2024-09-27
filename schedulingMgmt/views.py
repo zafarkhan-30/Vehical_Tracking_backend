@@ -23,7 +23,7 @@ class GetRouteList(GenericAPIView):
         route_number = self.request.query_params.get('route_number')
 
         result = {"status": "error",
-                  "message": "Unable to retrieve buses list"}
+                  "message": "Unable to retrieve route list"}
 
         try:
             itms = ITMS(db_config, user_group)
@@ -47,9 +47,9 @@ class GetRouteList(GenericAPIView):
 
         except Exception as e:
             result['message'] = str(e)
-            return Response(result, status=400)
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(result, status=200)
+        return Response(result, status=status.HTTP_200_OK)
 
 
 class GetScheduleBusesList(GenericAPIView):
