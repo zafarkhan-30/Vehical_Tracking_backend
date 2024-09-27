@@ -47,9 +47,9 @@ class GetRouteList(GenericAPIView):
 
         except Exception as e:
             result['message'] = str(e)
-            return Response(result, status=401)
+            return Response(result, status=400)
 
-        return Response(result, status=401)
+        return Response(result, status=200)
 
 
 class GetScheduleBusesList(GenericAPIView):
