@@ -49,7 +49,7 @@ class GetRouteList(GenericAPIView):
             result['message'] = str(e)
             return Response(result, status=401)
 
-        return Response(result, status=status.HTTP_200_OK)
+        return Response(result, status=401)
 
 
 class GetScheduleBusesList(GenericAPIView):
