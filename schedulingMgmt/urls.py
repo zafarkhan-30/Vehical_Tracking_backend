@@ -13,7 +13,10 @@ urlpatterns = [
     path('GetChargersListjson/', GetChargersList.as_view(), ),
   
     path('GetChargerDetailjson/', GetChargerDetailForPartik.as_view(), ),
+    
     path('GetBussesList/<str:scheduling_date>/<int:route_id>/', GetScheduleBusesList.as_view(), ),
+
+
     path('get-dashboard-count/', GetdashboardCountView.as_view(),),
 
 
