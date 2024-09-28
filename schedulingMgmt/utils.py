@@ -98,7 +98,7 @@ class ITMS:
                     LEFT JOIN 
                         OPR_Scheduling os ON osd.SchedulingId = os.SchedulingId AND os.SchedulingDate = '{date}'
                     WHERE 
-                        os.SchedulingDate = '{date}' OR os.SchedulingDate IS NULL
+                        (os.SchedulingDate = '{date}' OR os.SchedulingDate IS NULL)
                         {filter}
                     GROUP BY 
                         r.RouteId,
